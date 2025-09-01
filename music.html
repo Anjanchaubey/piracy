@@ -1,274 +1,361 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light"> <!-- Default to light theme, JS will override -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Music Piracy Landscape: An Educational Overview</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Chosen Palette: Slate Gray & Amber -->
-    <!-- Application Structure Plan: The SPA is designed as a top-down investigative report. It starts with a clear title and a mandatory disclaimer to frame the educational context. The user first encounters an interactive bar chart summarizing the relative prominence of platforms, providing an immediate high-level overview. Clicking a bar smoothly scrolls to a detailed "Platform Profile" card below. This structure was chosen to facilitate guided discovery, allowing users to move from quantitative comparison (the chart) to qualitative understanding (the profiles) seamlessly. This dashboard-like approach is more engaging and intuitive than a static list, encouraging exploration of the data. -->
-    <!-- Visualization & Content Choices: 
-        - Report Info: Top 10 pirated music sources & their characteristics. -> Goal: Compare platform prominence. -> Viz/Presentation: Horizontal Bar Chart. -> Interaction: Click bar to scroll to/highlight detail card. -> Justification: Bar charts are excellent for comparing categorical data. The interaction directly links the visual summary to detailed context, improving data exploration. -> Library: Chart.js (Canvas).
-        - Report Info: Details for each platform (type, risks, description). -> Goal: Inform and educate on specifics. -> Viz/Presentation: Grid of "Profile Cards". -> Interaction: Cards are highlighted on chart click. -> Justification: Cards provide structured, digestible information for each platform. The grid layout is responsive and clean. -> Library/Method: HTML/CSS with Tailwind.
-        - Report Info: Educational context and warnings. -> Goal: Ensure responsible presentation of sensitive topic. -> Viz/Presentation: Prominent disclaimer and methodology text blocks. -> Interaction: Static text. -> Justification: Clearly communicates the educational intent and potential dangers. -> Library/Method: HTML/CSS with Tailwind.
-    -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+    
     <style>
+        /* ============================================
+        CSS Custom Properties for Theming
+        ============================================
+        */
+        :root {
+            /* -- LIGHT THEME (WHITE, BLACK, & #6600ff) -- */
+            --bg-color-start: #ffffff;
+            --bg-color-end: #f9fafb;
+            --text-color: #1f2937;
+            --header-text-color: #000000;
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --card-border: #e5e7eb;
+            --card-shadow: rgba(0, 0, 0, 0.07);
+            --accent-color: #6600ff;
+            --accent-glow: rgba(102, 0, 255, 0.25);
+            --footer-text-color: #4b5563;
+        }
+
+        html.dark {
+            /* -- DARK THEME (BLACK & PURPLE) -- */
+            --bg-color-start: #000000;
+            --bg-color-end: #0d0d0d;
+            --text-color: #d1d5db;
+            --header-text-color: #ffffff;
+            --card-bg: rgba(20, 20, 20, 0.7);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --card-shadow: rgba(0, 0, 0, 0.5);
+            --accent-color: #A78BFA;
+            --footer-text-color: #9ca3af;
+        }
+
+        /* ============================================
+        Base & Page-Specific Styles
+        ============================================
+        */
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
-            color: #1e293b;
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color-start);
+            background-image: linear-gradient(135deg, var(--bg-color-start) 0%, var(--bg-color-end) 100%);
+            color: var(--text-color);
+            transition: background 0.5s ease, color 0.5s ease;
         }
-        .chart-container {
-            position: relative;
-            width: 100%;
-            max-width: 900px;
-            margin-left: auto;
-            margin-right: auto;
-            height: 400px;
-            max-height: 500px;
-        }
-        @media (min-width: 768px) {
-            .chart-container {
-                height: 500px;
-            }
-        }
+
+        .logo-font { font-family: 'Roboto Mono', monospace; }
+        .chart-container { position: relative; width: 100%; max-width: 900px; margin: auto; height: 400px; max-height: 500px; }
+        @media (min-width: 768px) { .chart-container { height: 500px; } }
+        
         .highlight {
             transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
             transform: scale(1.02);
-            box-shadow: 0 0 0 3px #f59e0b;
+            box-shadow: 0 0 0 3px var(--accent-color);
         }
+
         .nav-button {
             transition: background-color 0.2s, color 0.2s;
+            background-color: var(--card-border);
+            color: var(--text-color);
         }
         .nav-button.active {
-            background-color: #f59e0b;
-            color: #ffffff;
+            background-color: var(--accent-color);
+            color: white;
         }
-        .content-section {
-            display: none;
-        }
-        .content-section.active {
-            display: block;
+
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        
+        .profile-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
         }
     </style>
 </head>
-<body class="bg-slate-50">
+<body class="antialiased">
 
-    <div class="container mx-auto p-4 sm:p-6 md:p-8">
-        
-        <header class="text-center mb-8 md:mb-12">
-            <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-800 mb-2">Digital Music Distribution Landscape</h1>
-            <p class="text-lg text-slate-600">An Educational Overview of Unofficial Platforms</p>
-        </header>
-
-        <div class="bg-amber-100 border-l-4 border-amber-500 text-amber-800 p-4 rounded-md mb-8 md:mb-12" role="alert">
-            <p class="font-bold">Disclaimer for Educational Purposes</p>
-                    </div>
-
-        <nav class="flex justify-center mb-8 md:mb-12 bg-slate-200 rounded-lg p-1.5">
-            <button id="nav-summary" class="nav-button flex-1 text-center py-2 px-4 rounded-md font-semibold text-slate-700">Comparative Analysis</button>
-            <button id="nav-profiles" class="nav-button flex-1 text-center py-2 px-4 rounded-md font-semibold text-slate-700">Platform Profiles</button>
+    <!-- ▼▼▼ REUSABLE HEADER COMPONENT ▼▼▼ -->
+    <header id="site-header" style="position: fixed; top: 0; left: 0; right: 0; z-index: 50; transition: all 0.3s ease;">
+        <nav style="max-width: 1280px; margin-left: auto; margin-right: auto; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+            <a href="index.html" style="font-size: 1.5rem; line-height: 2rem; font-weight: 700; font-family: 'Roboto Mono', monospace; letter-spacing: -0.05em; color: var(--header-text-color); text-decoration: none; transition: color 0.5s;">
+                <span style="color: var(--accent-color);">7</span>Piracy
+            </a>
+            <div id="desktop-nav" style="display: none; align-items: center; gap: 2rem;">
+                <a href="index.html" style="color: var(--text-color); transition: color 0.3s; font-weight: 600; text-decoration: none;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='var(--text-color)'">Home</a>
+                <a href="about.html" style="color: var(--text-color); transition: color 0.3s; font-weight: 600; text-decoration: none;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='var(--text-color)'">About</a>
+                <button id="theme-toggle-desktop" style="background-color: var(--bg-color-end); border-radius: 9999px; cursor: pointer; transition: all 0.4s ease; box-shadow: -5px -5px 10px var(--neumorphism-shadow-light), 5px 5px 10px var(--neumorphism-shadow-dark); width: 2.5rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; position: relative; border: none;">
+                    <svg class="sun-icon" style="width: 1.25rem; height: 1.25rem; color: #FBBF24;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M12 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <svg class="moon-icon" style="width: 1.25rem; height: 1.25rem; color: #818cf8; position: absolute;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                </button>
+            </div>
+            <div id="mobile-menu-button-container">
+                <button id="mobile-menu-button" style="color: var(--header-text-color); border: none; background: none; cursor: pointer;">
+                    <svg style="width: 1.5rem; height: 1.5rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
         </nav>
-
-        <main>
-            <section id="summary-section" class="content-section">
-                <div class="bg-white p-6 rounded-lg shadow-lg mb-8">
-                    <h2 class="text-2xl font-bold text-slate-800 mb-4 text-center">Platform Mention Frequency</h2>
-                    <p class="text-slate-600 mb-6 text-center max-w-3xl mx-auto">This chart visualizes the relative frequency of mentions for various unofficial music distribution platforms, based on analysis of discussions across public online forums. A higher score indicates more frequent discussion. Click on a platform's bar to jump to its detailed profile.</p>
-                    <div class="chart-container">
-                        <canvas id="piracyChart"></canvas>
-                    </div>
-                </div>
-            </section>
-
-            <section id="profiles-section" class="content-section">
-                <div class="bg-white p-6 rounded-lg shadow-lg">
-                    <h2 class="text-2xl font-bold text-slate-800 mb-4 text-center">In-Depth Platform Profiles</h2>
-                    <p class="text-slate-600 mb-8 text-center max-w-3xl mx-auto">This section provides detailed information on each platform, including its primary distribution method and associated risks. The platforms are ordered by their mention frequency in the analysis.</p>
-                    <div id="platform-details" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    </div>
-                </div>
-            </section>
-        </main>
-        
-    </div>
-
-<footer class="w-full text-center p-6 text-gray-600">
-  <div class="border-t border-gray-300 pt-6">
-    <p class="text-sm">
-      Made with <span class="text-red-500">&hearts;</span> by <strong>Ann</strong>
-    </p>
-    <p class="text-sm mt-2">
-      Email: 
-      <a href="mailto:anjanchaubey0.com" class="text-blue-500 hover:text-blue-700 transition-colors">
-        anjanchaubey0.com
-      </a>
-    </p>
-    <div class="flex items-center justify-center space-x-4 mt-4">
-      <!-- Mail -->
-      <a href="mailto:anjanchaubey0.com" class="text-gray-500 hover:text-gray-800 transition-colors">
-        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg>
-      </a>
-      <!-- GitHub -->
-      <a href="https://github.com/Anjanchaubey" target="_blank" class="text-gray-500 hover:text-gray-800 transition-colors">
-        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.6 0-12 5.4-12 12 0 5.3 3.4 9.8 8.2 11.4.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.5-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2.9-.3 2-.4 3-.4 1 0 2 .1 3 .4 2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6C20.6 21.8 24 17.3 24 12c0-6.6-5.4-12-12-12z"></path></svg>
-      </a>
-      <!-- Instagram -->
-      <a href="https://instagram.com/anjanchaubey07" target="_blank" class="text-gray-500 hover:text-gray-800 transition-colors">
-        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M7 2C4.2 2 2 4.2 2 7v10c0 2.8 2.2 5 5 5h10c2.8 0 5-2.2 5-5V7c0-2.8-2.2-5-5-5H7zm10 2c1.7 0 3 1.3 3 3v10c0 1.7-1.3 3-3 3H7c-1.7 0-3-1.3-3-3V7c0-1.7 1.3-3 3-3h10zm-5 3c-2.8 0-5 2.2-5 5s2.2 5 5 5 5-2.2 5-5-2.2-5-5-5zm0 2c1.7 0 3 1.3 3 3s-1.3 3-3 3-3-1.3-3-3 1.3-3 3-3zm4.5-3c-.8 0-1.5.7-1.5 1.5S15.7 8 16.5 8 18 7.3 18 6.5 17.3 4 16.5 4z"></path></svg>
-      </a>
-    </div>
-    <p class="text-xs text-gray-400 mt-4">© 2025 All Rights Reserved</p>
-  </div>
-</footer>
-
-    <script>
-        const platformData = [
-            { id: 'youtube-rippers', name: 'YouTube Rippers', type: 'Stream-Ripping', mention_frequency: 95, description: 'Web services or software that convert video streams, primarily from YouTube, into audio files (e.g., MP3). This method is highly accessible but often results in lower-quality audio.', risks: ['Malware & Adware', 'Low Audio Quality', 'Legal Risk'] },
-            { id: 'soulseek', name: 'Soulseek', type: 'Peer-to-Peer (P2P)', mention_frequency: 90, description: 'A long-standing P2P network known for its vast library of rare and obscure music. It functions more like a community, with users sharing files directly with each other.', risks: ['IP Exposure', 'Malware Risk', 'Legal Risk'] },
-            { id: 'rutracker', name: 'Rutracker', type: 'Torrent Tracker', mention_frequency: 85, description: 'A massive Russian-based public torrent tracker with an extensive collection of content, including a vast and well-organized music section often containing lossless formats.', risks: ['Requires VPN', 'Malware Risk', 'Legal Risk'] },
-            { id: 'deemix', name: 'Deemix / Deezloader', type: 'Stream-Downloading Tool', mention_frequency: 82, description: 'Applications that allow users to download high-quality audio directly from the music streaming service Deezer, often requiring a user account token.', risks: ['Account Termination', 'Legal Risk', 'Malware (unofficial versions)'] },
-            { id: 'the-pirate-bay', name: 'The Pirate Bay', type: 'Torrent Tracker', mention_frequency: 78, description: 'One of the most infamous and resilient torrent indexing sites. It provides magnet links for a wide range of content, though its reliability and safety can be inconsistent.', risks: ['Aggressive Ads', 'Malware Risk', 'Requires VPN'] },
-            { id: '1337x', name: '1337x', type: 'Torrent Tracker', mention_frequency: 75, description: 'A popular and generally well-regarded public torrent site with a clean interface and a large, active community that helps verify the quality of torrents.', risks: ['Requires VPN', 'Pop-up Ads', 'Legal Risk'] },
-            { id: 'slav-art', name: 'Slav Art', type: 'Direct Download', mention_frequency: 65, description: 'A platform known for offering high-quality, often lossless (FLAC), music downloads via direct links, bypassing the need for torrent clients.', risks: ['Aggressive Ads', 'Malware Risk', 'File Host Limits'] },
-            { id: 'private-communities', name: 'Private Communities', type: 'Mixed (Discord/Telegram)', mention_frequency: 60, description: 'A growing trend where music sharing occurs in invite-only groups on platforms like Discord or Telegram. These offer more privacy but are harder to access.', risks: ['Scams', 'Difficult to Access', 'Group Rules'] },
-            { id: 'doubledouble-top', name: 'Doubledouble.top', type: 'Direct Download Forum', mention_frequency: 55, description: 'A forum-based website where users share links to direct downloads for music albums, often hosted on various third-party file hosting services.', risks: ['Aggressive Ads', 'Broken Links', 'Malware Risk'] },
-            { id: 'redacted-club', name: 'Redacted.ch (Private)', type: 'Private Torrent Tracker', mention_frequency: 50, description: 'An exclusive, invite-only private torrent tracker considered the pinnacle for audiophiles due to its strict quality rules and immense collection of lossless music.', risks: ['Extremely Hard to Join', 'Strict Ratio Rules', 'Legal Risk'] },
-        ];
-
-        const detailsContainer = document.getElementById('platform-details');
-        platformData.forEach(platform => {
-            const card = document.createElement('div');
-            card.id = platform.id;
-            card.className = 'bg-slate-50 border border-slate-200 rounded-lg p-4 transition-shadow duration-300 hover:shadow-xl';
-            
-            card.innerHTML = `
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h3 class="text-lg font-bold text-slate-800">${platform.name}</h3>
-                        <p class="text-sm font-semibold text-amber-600">${platform.type}</p>
-                    </div>
-                    <button onclick="window.open('https://www.google.com/search?q=${encodeURIComponent(platform.name)}', '_blank')" class="bg-slate-700 text-white font-semibold py-2 px-4 rounded-lg hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-opacity-75 whitespace-nowrap">
-                        Search
+        <div id="mobile-menu" style="display: none; background-color: var(--card-bg); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);">
+            <div style="padding: 0.5rem 0.75rem 0.75rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                <a href="index.html" style="display: block; padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-weight: 600; color: var(--text-color); text-decoration: none;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='var(--text-color)'">Home</a>
+                <a href="about.html" style="display: block; padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-weight: 600; color: var(--text-color); text-decoration: none;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='var(--text-color)'">About</a>
+                <div style="padding-top: 1rem;">
+                    <button id="theme-toggle-mobile" style="background-color: var(--bg-color-end); border-radius: 9999px; cursor: pointer; transition: all 0.4s ease; box-shadow: -5px -5px 10px var(--neumorphism-shadow-light), 5px 5px 10px var(--neumorphism-shadow-dark); width: 3rem; height: 3rem; display: flex; align-items: center; justify-content: center; position: relative; border: none;">
+                         <svg class="sun-icon" style="width: 1.5rem; height: 1.5rem; color: #FBBF24;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M12 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                         <svg class="moon-icon" style="width: 1.5rem; height: 1.5rem; color: #818cf8; position: absolute;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                     </button>
                 </div>
-            `;
-            detailsContainer.appendChild(card);
-        });
+            </div>
+        </div>
+    </header>
+    <!-- ▲▲▲ END OF HEADER ▲▲▲ -->
+    
+    <main class="container mx-auto p-4 sm:p-6 md:p-8" style="padding-top: 6rem;">
+        <header class="text-center mb-8 md:mb-12">
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-[var(--header-text-color)] mb-2">Digital Music Distribution Landscape</h1>
+            <p class="text-lg text-[var(--text-color)]">An Educational Overview of Unofficial Platforms</p>
+        </header>
 
-        const ctx = document.getElementById('piracyChart').getContext('2d');
-        const piracyChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: platformData.map(p => p.name),
-                datasets: [{
-                    label: 'Relative Mention Frequency',
-                    data: platformData.map(p => p.mention_frequency),
-                    backgroundColor: 'rgba(245, 158, 11, 0.7)',
-                    borderColor: 'rgba(245, 158, 11, 1)',
-                    borderWidth: 1,
-                    hoverBackgroundColor: 'rgba(245, 158, 11, 1)',
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(203, 213, 225, 0.5)'
-                        },
-                        ticks: {
-                            color: '#475569'
-                        }
-                    },
-                    y: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            color: '#475569'
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        backgroundColor: '#1e293b',
-                        titleFont: {
-                            weight: 'bold'
-                        },
-                        bodyFont: {
-                            weight: 'normal'
-                        },
-                        padding: 10,
-                        cornerRadius: 4
-                    }
-                },
-                onClick: (event, elements) => {
-                    if (elements.length > 0) {
-                        const index = elements[0].index;
-                        const platform = platformData[index];
-                        const element = document.getElementById(platform.id);
+        <nav class="flex justify-center mb-8 md:mb-12 bg-[var(--card-border)] rounded-lg p-1.5">
+            <button id="nav-summary" class="nav-button flex-1 text-center py-2 px-4 rounded-md font-semibold">Comparative Analysis</button>
+            <button id="nav-profiles" class="nav-button flex-1 text-center py-2 px-4 rounded-md font-semibold">Platform Profiles</button>
+        </nav>
 
-                        document.getElementById('nav-profiles').click();
+        <section id="summary-section" class="content-section">
+            <div class="bg-[var(--card-bg)] border border-[var(--card-border)] p-6 rounded-lg shadow-lg mb-8">
+                <h2 class="text-2xl font-bold text-[var(--header-text-color)] mb-4 text-center">Platform Mention Frequency</h2>
+                <p class="text-[var(--text-color)] mb-6 text-center max-w-3xl mx-auto">This chart visualizes the relative frequency of mentions for various unofficial music distribution platforms. Click on a bar to jump to its detailed profile.</p>
+                <div class="chart-container">
+                    <canvas id="piracyChart"></canvas>
+                </div>
+            </div>
+        </section>
 
-                        setTimeout(() => {
-                           if (element) {
-                                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                
-                                document.querySelectorAll('.highlight').forEach(el => el.classList.remove('highlight'));
-                                element.classList.add('highlight');
-                                
-                                setTimeout(() => {
-                                    element.classList.remove('highlight');
-                                }, 2000);
-                            }
-                        }, 100);
-                    }
+        <section id="profiles-section" class="content-section">
+            <div class="bg-[var(--card-bg)] border border-[var(--card-border)] p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-bold text-[var(--header-text-color)] mb-4 text-center">In-Depth Platform Profiles</h2>
+                <p class="text-[var(--text-color)] mb-8 text-center max-w-3xl mx-auto">This section provides details on each platform, including its primary distribution method and associated risks, ordered by mention frequency.</p>
+                <div id="platform-details" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+        </section>
+        
+        <footer class="w-full text-center p-6 text-[var(--footer-text-color)]">
+            <div class="border-t border-[var(--card-border)] pt-6">
+                <p class="text-sm">Made with <span class="text-red-500">&hearts;</span> by <strong>Anjan Chaubey</strong></p>
+                 <div class="flex items-center justify-center space-x-4 mt-4">
+                    <a href="mailto:anjanchaubey0@gmail.com" class="text-[var(--footer-text-color)] hover:text-[var(--accent-color)] transition-colors"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884zM18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg></a>
+                    <a href="https://github.com/Anjanchaubey" target="_blank" class="text-[var(--footer-text-color)] hover:text-[var(--accent-color)] transition-colors"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.6 0-12 5.4-12 12 0 5.3 3.4 9.8 8.2 11.4.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.5-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2.9-.3 2-.4 3-.4 1 0 2 .1 3 .4 2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6C20.6 21.8 24 17.3 24 12c0-6.6-5.4-12-12-12z"></path></svg></a>
+                    <a href="https://instagram.com/anjanchaubey07" target="_blank" class="text-[var(--footer-text-color)] hover:text-[var(--accent-color)] transition-colors"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M7 2C4.2 2 2 4.2 2 7v10c0 2.8 2.2 5 5 5h10c2.8 0 5-2.2 5-5V7c0-2.8-2.2-5-5-5H7zm10 2c1.7 0 3 1.3 3 3v10c0 1.7-1.3 3-3 3H7c-1.7 0-3-1.3-3-3V7c0-1.7 1.3-3 3-3h10zm-5 3c-2.8 0-5 2.2-5 5s2.2 5 5 5 5-2.2 5-5-2.2-5-5-5zm0 2c1.7 0 3 1.3 3 3s-1.3 3-3 3-3-1.3-3-3 1.3-3 3-3zm4.5-3c-.8 0-1.5.7-1.5 1.5S15.7 8 16.5 8 18 7.3 18 6.5 17.3 4 16.5 4z"></path></svg></a>
+                </div>
+                <p class="text-xs mt-4">© 2025 7 Piracy. All Rights Reserved.</p>
+            </div>
+        </footer>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let piracyChart; // Hoisted
+            // ===================================
+            // HEADER SCRIPT LOGIC
+            // ===================================
+            const themeToggles = document.querySelectorAll('#theme-toggle-desktop, #theme-toggle-mobile');
+            const sunIcons = document.querySelectorAll('.sun-icon');
+            const moonIcons = document.querySelectorAll('.moon-icon');
+            const htmlElement = document.documentElement;
+
+            const applyTheme = (theme) => {
+                if (theme === 'dark') {
+                    htmlElement.classList.add('dark');
+                    htmlElement.classList.remove('light');
+                    sunIcons.forEach(i => { i.style.transform = 'rotate(180deg) scale(0)'; i.style.opacity = '0'; });
+                    moonIcons.forEach(i => { i.style.transform = 'rotate(0) scale(1)'; i.style.opacity = '1'; });
+                } else {
+                    htmlElement.classList.remove('dark');
+                    htmlElement.classList.add('light');
+                    sunIcons.forEach(i => { i.style.transform = 'rotate(0) scale(1)'; i.style.opacity = '1'; });
+                    moonIcons.forEach(i => { i.style.transform = 'rotate(-180deg) scale(0)'; i.style.opacity = '0'; });
                 }
+                localStorage.setItem('theme', theme);
+                if(piracyChart) updateChartColors();
+            };
+
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (savedTheme) { applyTheme(savedTheme); }
+            else if (prefersDark) { applyTheme('dark'); }
+            else { applyTheme('light'); }
+
+            themeToggles.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const isDark = htmlElement.classList.contains('dark');
+                    applyTheme(isDark ? 'light' : 'dark');
+                });
+            });
+            
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const desktopNav = document.getElementById('desktop-nav');
+            const mobileMenuBtnContainer = document.getElementById('mobile-menu-button-container');
+
+            const handleResize = () => {
+                if (window.innerWidth >= 768) {
+                    desktopNav.style.display = 'flex';
+                    mobileMenuBtnContainer.style.display = 'none';
+                    mobileMenu.style.display = 'none';
+                } else {
+                    desktopNav.style.display = 'none';
+                    mobileMenuBtnContainer.style.display = 'block';
+                }
+            };
+
+            mobileMenuButton.addEventListener('click', () => {
+                const isHidden = mobileMenu.style.display === 'none';
+                mobileMenu.style.display = isHidden ? 'block' : 'none';
+            });
+
+            window.addEventListener('resize', handleResize);
+            handleResize();
+
+            const header = document.getElementById('site-header');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 10) {
+                    header.style.backgroundColor = 'var(--card-bg)';
+                    header.style.backdropFilter = 'blur(10px)';
+                    header.style.webkitBackdropFilter = 'blur(10px)';
+                    header.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+                } else {
+                    header.style.backgroundColor = 'transparent';
+                    header.style.backdropFilter = 'none';
+                    header.style.webkitBackdropFilter = 'none';
+                    header.style.boxShadow = 'none';
+                }
+            });
+
+            // ===================================
+            // MUSIC PAGE SPECIFIC LOGIC
+            // ===================================
+            const platformData = [
+                { id: 'youtube-rippers', name: 'YouTube Rippers', type: 'Stream-Ripping', mention_frequency: 95, description: 'Web services or software that convert video streams, primarily from YouTube, into audio files (e.g., MP3). This method is highly accessible but often results in lower-quality audio.', risks: ['Malware & Adware', 'Low Audio Quality', 'Legal Risk'] },
+                { id: 'soulseek', name: 'Soulseek', type: 'Peer-to-Peer (P2P)', mention_frequency: 90, description: 'A long-standing P2P network known for its vast library of rare and obscure music. It functions more like a community, with users sharing files directly with each other.', risks: ['IP Exposure', 'Malware Risk', 'Legal Risk'] },
+                { id: 'rutracker', name: 'Rutracker', type: 'Torrent Tracker', mention_frequency: 85, description: 'A massive Russian-based public torrent tracker with an extensive collection of content, including a vast and well-organized music section often containing lossless formats.', risks: ['Requires VPN', 'Malware Risk', 'Legal Risk'] },
+                { id: 'deemix', name: 'Deemix / Deezloader', type: 'Stream-Downloading Tool', mention_frequency: 82, description: 'Applications that allow users to download high-quality audio directly from the music streaming service Deezer, often requiring a user account token.', risks: ['Account Termination', 'Legal Risk', 'Malware (unofficial versions)'] },
+                { id: 'the-pirate-bay', name: 'The Pirate Bay', type: 'Torrent Tracker', mention_frequency: 78, description: 'One of the most infamous and resilient torrent indexing sites. It provides magnet links for a wide range of content, though its reliability and safety can be inconsistent.', risks: ['Aggressive Ads', 'Malware Risk', 'Requires VPN'] },
+                { id: '1337x', name: '1337x', type: 'Torrent Tracker', mention_frequency: 75, description: 'A popular and generally well-regarded public torrent site with a clean interface and a large, active community that helps verify the quality of torrents.', risks: ['Requires VPN', 'Pop-up Ads', 'Legal Risk'] },
+                { id: 'slav-art', name: 'Slav Art', type: 'Direct Download', mention_frequency: 65, description: 'A platform known for offering high-quality, often lossless (FLAC), music downloads via direct links, bypassing the need for torrent clients.', risks: ['Aggressive Ads', 'Malware Risk', 'File Host Limits'] },
+                { id: 'private-communities', name: 'Private Communities', type: 'Mixed (Discord/Telegram)', mention_frequency: 60, description: 'A growing trend where music sharing occurs in invite-only groups on platforms like Discord or Telegram. These offer more privacy but are harder to access.', risks: ['Scams', 'Difficult to Access', 'Group Rules'] },
+                { id: 'doubledouble-top', name: 'Doubledouble.top', type: 'Direct Download Forum', mention_frequency: 55, description: 'A forum-based website where users share links to direct downloads for music albums, often hosted on various third-party file hosting services.', risks: ['Aggressive Ads', 'Broken Links', 'Malware Risk'] },
+                { id: 'redacted-club', name: 'Redacted.ch (Private)', type: 'Private Torrent Tracker', mention_frequency: 50, description: 'An exclusive, invite-only private torrent tracker considered the pinnacle for audiophiles due to its strict quality rules and immense collection of lossless music.', risks: ['Extremely Hard to Join', 'Strict Ratio Rules', 'Legal Risk'] },
+            ];
+            
+            const getChartColors = () => {
+                const isDark = document.documentElement.classList.contains('dark');
+                const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim();
+                const hexToRgba = (hex, alpha) => {
+                    const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+                    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                };
+                return {
+                    grid: isDark ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb',
+                    ticks: isDark ? '#d1d5db' : '#1f2937',
+                    bar: hexToRgba(accent, 0.7),
+                    border: accent,
+                    hover: accent
+                };
+            };
+            
+            function updateChartColors() {
+                if (!piracyChart) return;
+                const colors = getChartColors();
+                piracyChart.options.scales.x.grid.color = colors.grid;
+                piracyChart.options.scales.x.ticks.color = colors.ticks;
+                piracyChart.options.scales.y.grid.color = 'transparent';
+                piracyChart.options.scales.y.ticks.color = colors.ticks;
+                piracyChart.data.datasets[0].backgroundColor = colors.bar;
+                piracyChart.data.datasets[0].borderColor = colors.border;
+                piracyChart.data.datasets[0].hoverBackgroundColor = colors.hover;
+                piracyChart.update();
             }
-        });
 
-        const navButtons = document.querySelectorAll('.nav-button');
-        const contentSections = document.querySelectorAll('.content-section');
+            const detailsContainer = document.getElementById('platform-details');
+            platformData.forEach(platform => {
+                const card = document.createElement('div');
+                card.id = platform.id;
+                card.className = 'profile-card rounded-lg p-4 transition-shadow duration-300 hover:shadow-xl';
+                card.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-lg font-bold text-[var(--header-text-color)]">${platform.name}</h3>
+                            <p class="text-sm font-semibold" style="color:var(--accent-color)">${platform.type}</p>
+                        </div>
+                        <button onclick="window.open('https://www.google.com/search?q=${encodeURIComponent(platform.name)}', '_blank')" class="text-white font-semibold py-2 px-4 rounded-lg transition-opacity hover:opacity-90 focus:outline-none" style="background-color: var(--accent-color)">
+                            Search
+                        </button>
+                    </div>
+                `;
+                detailsContainer.appendChild(card);
+            });
 
-        function switchTab(targetId) {
-            navButtons.forEach(button => {
-                button.classList.remove('active');
-                if (button.id === `nav-${targetId}`) {
-                    button.classList.add('active');
+            const ctx = document.getElementById('piracyChart').getContext('2d');
+            piracyChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: platformData.map(p => p.name),
+                    datasets: [{
+                        label: 'Relative Mention Frequency',
+                        data: platformData.map(p => p.mention_frequency),
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { x: { beginAtZero: true }, y: { grid: { display: false } } },
+                    plugins: { legend: { display: false } },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const platform = platformData[index];
+                            document.getElementById('nav-profiles').click();
+                            setTimeout(() => {
+                                const element = document.getElementById(platform.id);
+                                if (element) {
+                                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    document.querySelectorAll('.highlight').forEach(el => el.classList.remove('highlight'));
+                                    element.classList.add('highlight');
+                                    setTimeout(() => element.classList.remove('highlight'), 2000);
+                                }
+                            }, 100);
+                        }
+                    }
                 }
             });
+            updateChartColors();
 
-            contentSections.forEach(section => {
-                section.classList.remove('active');
-                if (section.id === `${targetId}-section`) {
-                    section.classList.add('active');
-                }
-            });
-        }
-
-        navButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const targetId = button.id.replace('nav-', '');
-                switchTab(targetId);
-            });
+            const navButtons = document.querySelectorAll('.nav-button');
+            const contentSections = document.querySelectorAll('.content-section');
+            function switchTab(targetId) {
+                navButtons.forEach(button => button.classList.toggle('active', button.id === `nav-${targetId}`));
+                contentSections.forEach(section => section.classList.toggle('active', section.id === `${targetId}-section`));
+            }
+            navButtons.forEach(button => button.addEventListener('click', () => switchTab(button.id.replace('nav-', ''))));
+            switchTab('profiles'); // Start on profiles view by default
         });
-
-        document.getElementById('nav-profiles').click();
     </script>
-
 </body>
 </html>
-
 
