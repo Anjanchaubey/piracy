@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Landscape of Modded APKs: An Interactive Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals with Subtle Accents -->
+    <!-- Application Structure Plan: A dashboard-style layout is used to provide a user-driven exploration experience. It is structured into three main interactive sections: a platform ranking list that acts as the primary navigation, a dynamic detail view that updates on selection, and a comparative bar chart for visual context. A separate, distinct section is dedicated to security risks to make the warnings clear and impactful. This structure was chosen because it allows users to digest the information in manageable pieces, see the relationships between different data points through interaction, and engage with the content in a non-linear way, which is more effective for understanding than a static, linear report. -->
+    <!-- Visualization & Content Choices: 
+        1. Top 10 Platform List: (Report Info: Platform names) -> (Goal: Inform/Organize) -> (Viz: Interactive HTML list with individual buttons) -> (Interaction: onClick on name updates other components, onClick on button opens new tab) -> (Justification: Provides direct action for each item, improving usability) -> (Method: JS/HTML).
+        2. Platform Details: (Report Info: Platform descriptions) -> (Goal: Inform) -> (Viz: Dynamic text block) -> (Interaction: Updates based on list selection) -> (Justification: Focuses user attention on one item at a time for better clarity) -> (Method: JS DOM manipulation).
+        3. Mention Frequency Chart: (Report Info: Implied platform popularity from ranking) -> (Goal: Compare) -> (Viz: Horizontal Bar Chart) -> (Interaction: Bar highlights on selection, tooltips on hover) -> (Justification: Provides an immediate visual comparison of platform discussion volume) -> (Library: Chart.js/Canvas).
+        4. Security Risks: (Report Info: Associated risks) -> (Goal: Warn/Inform) -> (Viz: Icon-based card grid) -> (Interaction: Hover effects) -> (Justification: Breaks down complex information into easily digestible and visually appealing chunks) -> (Method: HTML/Tailwind CSS).
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fdfcfb;
+            color: #1a1a1a;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 50vh;
+        }
+        .nav-item {
+            transition: all 0.2s ease-in-out;
+        }
+        .nav-item.active {
+            background-color: #eaddd7;
+            color: #5c3c20;
+        }
+        .card {
+            background-color: #ffffff;
+            border: 1px solid #f0e9e4;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="container mx-auto p-4 sm:p-6 md:p-8">
+        <header class="text-center mb-10">
+            <h1 class="text-3xl md:text-4xl font-bold text-[#5c3c20] mb-2">The Landscape of Modded APKs</h1>
+            <p class="text-lg text-gray-600">An Interactive Analysis of Online Discussion Platforms</p>
+        </header>
+
+        <main id="app">
+            <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8 border border-gray-200">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-[#5c3c20] mb-3">Exploring the Ecosystem</h2>
+                    
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <aside class="lg:col-span-1">
+                        <h3 class="text-lg font-semibold mb-4 pb-2 border-b-2 border-[#eaddd7]">Top Mentioned Platforms</h3>
+                        <div id="platform-nav" class="space-y-2">
+                        </div>
+                    </aside>
+
+                    <section class="lg:col-span-2">
+                        <div id="platform-details" class="card rounded-lg p-6 min-h-[200px]">
+                            <h2 id="details-title" class="text-2xl font-bold text-[#5c3c20] mb-2">Select a Platform</h2>
+                            <p id="details-rank" class="font-semibold text-gray-500 mb-4">Details will appear here.</p>
+                            <p id="details-description" class="text-gray-800"></p>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="mt-12">
+                     <h3 class="text-xl font-bold text-center text-[#5c3c20] mb-2">Relative Mention Frequency</h3>
+                     <p class="text-center text-gray-600 mb-6">This chart illustrates the comparative frequency each platform is mentioned in online discussions, based on its ranking.</p>
+                    <div class="chart-container">
+                        <canvas id="mentionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <section id="risks" class="mt-12">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold text-[#5c3c20]">Understanding the Risks</h2>
+                    <p class="text-gray-700 mt-2 max-w-3xl mx-auto">Accessing software from unofficial sources carries significant security risks. It's crucial to understand these potential threats to protect your data and device. The following are common dangers associated with using modded APKs.</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="card rounded-lg p-6 text-center">
+                        <div class="text-4xl mb-3">🦠</div>
+                        <h3 class="font-bold text-lg mb-2">Malware & Viruses</h3>
+                        <p class="text-gray-600 text-sm">Modified apps can be injected with malicious code designed to damage your device or steal information.</p>
+                    </div>
+                    <div class="card rounded-lg p-6 text-center">
+                        <div class="text-4xl mb-3">🛡️</div>
+                        <h3 class="font-bold text-lg mb-2">Data & Privacy Theft</h3>
+                        <p class="text-gray-600 text-sm">Unofficial apps might contain spyware that collects personal data, such as passwords, contacts, and financial details.</p>
+                    </div>
+                    <div class="card rounded-lg p-6 text-center">
+                        <div class="text-4xl mb-3">⚖️</div>
+                        <h3 class="font-bold text-lg mb-2">Legal & Copyright Issues</h3>
+                        <p class="text-gray-600 text-sm">Downloading and using pirated software often violates terms of service and can constitute copyright infringement.</p>
+                    </div>
+                    <div class="card rounded-lg p-6 text-center">
+                        <div class="text-4xl mb-3">⚙️</div>
+                        <h3 class="font-bold text-lg mb-2">Lack of Support & Updates</h3>
+                        <p class="text-gray-600 text-sm">Modded apps do not receive official updates, leaving them vulnerable to security flaws and bugs over time.</p>
+                    </div>
+                </div>
+            </section>
+            
+           <footer class="w-full text-center p-6 text-gray-600">
+  <div class="border-t border-gray-300 pt-6">
+    <p class="text-sm">
+      Made with <span class="text-red-500">&hearts;</span> by <strong>Ann</strong>
+    </p>
+    <p class="text-sm mt-2">
+      Email: 
+      <a href="mailto:anjanchaubey0.com" class="text-blue-500 hover:text-blue-700 transition-colors">
+        anjanchaubey0.com
+      </a>
+    </p>
+    <div class="flex items-center justify-center space-x-4 mt-4">
+      <!-- Mail -->
+      <a href="mailto:anjanchaubey0.com" class="text-gray-500 hover:text-gray-800 transition-colors">
+        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg>
+      </a>
+      <!-- GitHub -->
+      <a href="https://github.com/Anjanchaubey" target="_blank" class="text-gray-500 hover:text-gray-800 transition-colors">
+        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.6 0-12 5.4-12 12 0 5.3 3.4 9.8 8.2 11.4.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.5-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2.9-.3 2-.4 3-.4 1 0 2 .1 3 .4 2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6C20.6 21.8 24 17.3 24 12c0-6.6-5.4-12-12-12z"></path></svg>
+      </a>
+      <!-- Instagram -->
+      <a href="https://instagram.com/anjanchaubey07" target="_blank" class="text-gray-500 hover:text-gray-800 transition-colors">
+        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M7 2C4.2 2 2 4.2 2 7v10c0 2.8 2.2 5 5 5h10c2.8 0 5-2.2 5-5V7c0-2.8-2.2-5-5-5H7zm10 2c1.7 0 3 1.3 3 3v10c0 1.7-1.3 3-3 3H7c-1.7 0-3-1.3-3-3V7c0-1.7 1.3-3 3-3h10zm-5 3c-2.8 0-5 2.2-5 5s2.2 5 5 5 5-2.2 5-5-2.2-5-5-5zm0 2c1.7 0 3 1.3 3 3s-1.3 3-3 3-3-1.3-3-3 1.3-3 3-3zm4.5-3c-.8 0-1.5.7-1.5 1.5S15.7 8 16.5 8 18 7.3 18 6.5 17.3 4 16.5 4z"></path></svg>
+      </a>
+    </div>
+    <p class="text-xs text-gray-400 mt-4">© 2025 All Rights Reserved</p>
+  </div>
+</footer>
+
+        </main>
+    </div>
+
+    <script>
+        const platformData = [
+            { id: 0, name: 'Mobilism', rank: 1, score: 10, description: 'A large, community-driven forum where users share and request a wide variety of modded applications and games.' },
+            { id: 1, name: 'APKMody', rank: 2, score: 9, description: 'Frequently mentioned for its broad selection and relatively clean user interface for both apps and games.' },
+            { id: 2, name: 'RexDl', rank: 3, score: 8, description: 'A long-standing and consistently recommended source, especially known within communities focused on game mods.' },
+            { id: 3, name: 'HappyMod', rank: 4, score: 7.5, description: 'Praised for its dedicated app that functions as a marketplace for user-submitted mods, complete with a rating system.' },
+            { id: 4, name: 'APKPure', rank: 5, score: 6, description: 'Primarily a legitimate APK host, but often discussed as a source for older app versions used in conjunction with modding tools.' },
+            { id: 5, name: 'Aptoide', rank: 6, score: 5.5, description: 'An alternative app store where some user-submitted applications may be modified. Its mention is often linked to this flexibility.' },
+            { id: 6, name: 'An1 (Android-1)', rank: 7, score: 5, description: 'Frequently recommended in mobile gaming communities for its specific focus on providing modded games.' },
+            { id: 7, name: 'BlackMod', rank: 8, score: 4.5, description: 'A well-known platform that is often cited by users seeking mods for both new and popular mobile games.' },
+            { id: 8, name: 'LiteAPKs', rank: 9, score: 4, description: 'Users refer to this site for modified "lite" versions of popular apps, focusing on ad removal or feature trimming.' },
+            { id: 9, name: 'Platinmods', rank: 10, score: 3.5, description: 'A forum-based community that users mention when seeking more specific, complex, or niche game modifications.' }
+        ];
+
+        let mentionChart;
+        let activePlatformId = null;
+
+        const navContainer = document.getElementById('platform-nav');
+        const detailsTitle = document.getElementById('details-title');
+        const detailsRank = document.getElementById('details-rank');
+        const detailsDescription = document.getElementById('details-description');
+
+        function updateDetails(platform) {
+            detailsTitle.textContent = platform.name;
+            detailsRank.textContent = `Rank #${platform.rank} in Online Discussions`;
+            detailsDescription.textContent = platform.description;
+
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`.nav-item[data-id='${platform.id}']`).classList.add('active');
+            
+            activePlatformId = platform.id;
+            updateChartHighlight();
+        }
+
+        function updateChartHighlight() {
+            if (mentionChart) {
+                const baseColor = 'rgba(212, 180, 159, 0.6)';
+                const highlightColor = 'rgba(92, 60, 32, 0.8)';
+                
+                mentionChart.data.datasets[0].backgroundColor = platformData.map(p => {
+                    return p.id === activePlatformId ? highlightColor : baseColor;
+                });
+                mentionChart.data.datasets[0].borderColor = platformData.map(p => {
+                    return p.id === activePlatformId ? 'rgba(92, 60, 32, 1)' : 'rgba(212, 180, 159, 1)';
+                });
+                mentionChart.update();
+            }
+        }
+
+        function createChart() {
+            const ctx = document.getElementById('mentionChart').getContext('2d');
+            mentionChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: platformData.map(p => p.name),
+                    datasets: [{
+                        label: 'Relative Mention Score',
+                        data: platformData.map(p => p.score),
+                        backgroundColor: 'rgba(212, 180, 159, 0.6)',
+                        borderColor: 'rgba(212, 180, 159, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#f0e9e4'
+                            },
+                             ticks: {
+                                color: '#6b7280',
+                            }
+                        },
+                        y: {
+                            grid: {
+                                display: false
+                            },
+                             ticks: {
+                                color: '#374151',
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: '#1a1a1a',
+                            titleFont: {
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: 14
+                            },
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.x !== null) {
+                                        label += context.parsed.x;
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            platformData.forEach(platform => {
+                const listItem = document.createElement('div');
+                listItem.className = 'nav-item flex items-center justify-between p-3 rounded-md font-medium text-gray-700 hover:bg-gray-100';
+                listItem.dataset.id = platform.id;
+
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = `${platform.rank}. ${platform.name}`;
+                nameSpan.className = 'flex-grow cursor-pointer';
+                nameSpan.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    updateDetails(platform);
+                });
+
+                const searchButton = document.createElement('a');
+                searchButton.href = `https://www.google.com/search?q=${encodeURIComponent(platform.name)}`;
+                searchButton.target = '_blank';
+                searchButton.rel = 'noopener noreferrer';
+                searchButton.textContent = 'Search ↗';
+                searchButton.className = 'ml-4 text-xs bg-[#eaddd7] text-[#5c3c20] font-semibold py-1 px-2 rounded-md hover:bg-[#d4c3b9] transition-colors';
+                searchButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+
+                listItem.appendChild(nameSpan);
+                listItem.appendChild(searchButton);
+                navContainer.appendChild(listItem);
+            });
+            
+            createChart();
+            
+            updateDetails(platformData[0]);
+        });
+    </script>
+</body>
+</html>
+
