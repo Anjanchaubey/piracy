@@ -1,159 +1,347 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light"> <!-- Default to light theme, JS will override -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Digital Piracy Landscape: An Interactive Report</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- Chosen Palette: Warm Neutrals -->
-    <!-- Application Structure Plan: A clean, single-column dashboard. It starts with filters, followed by a summary chart for visual comparison, and then a direct-action "Platform Directory." Each platform is a simple card with its name, type, and a "Search" button. This structure is highly efficient, removing all non-essential information and focusing the user on the core tasks of filtering, comparing, and acting (searching). -->
-    <!-- Visualization & Content Choices: 
-        - Report Info: Top Piracy Platforms (Comparison) -> Goal: Visually compare user mentions -> Viz: Horizontal Bar Chart -> Interaction: Updates based on top-level filters. -> Justification: The chart provides a quick, high-level understanding of the data landscape. -> Library: Chart.js (Canvas).
-        - Report Info: Top Piracy Platforms (Action List) -> Goal: Provide a simple, actionable list -> Viz: Grid of clean Cards -> Interaction: Each card has a "Search" button to trigger a Google search. -> Justification: Directly fulfills user request for a simple block with search buttons and minimal text, making it extremely user-friendly. -> Library: Vanilla JS.
-    -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+    
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #F5F5F4; /* stone-100 */
+        /* ============================================
+        CSS Custom Properties for Theming
+        ============================================
+        */
+        :root {
+            /* -- LIGHT THEME (WHITE, BLACK, & #6600ff) -- */
+            --bg-color-start: #ffffff;
+            --bg-color-end: #f9fafb;
+            --text-color: #1f2937;
+            --header-text-color: #000000;
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --card-border: #e5e7eb;
+            --card-shadow: rgba(0, 0, 0, 0.07);
+            --accent-color: #6600ff;
+            --accent-glow: rgba(102, 0, 255, 0.25);
+            --footer-text-color: #4b5563;
         }
+
+        html.dark {
+            /* -- DARK THEME (BLACK & PURPLE) -- */
+            --bg-color-start: #000000;
+            --bg-color-end: #0d0d0d;
+            --text-color: #d1d5db;
+            --header-text-color: #ffffff;
+            --card-bg: rgba(20, 20, 20, 0.7);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --card-shadow: rgba(0, 0, 0, 0.5);
+            --accent-color: #A78BFA;
+            --footer-text-color: #9ca3af;
+        }
+
+        /* ============================================
+        Base & Page-Specific Styles
+        ============================================
+        */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color-start);
+            background-image: linear-gradient(135deg, var(--bg-color-start) 0%, var(--bg-color-end) 100%);
+            color: var(--text-color);
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+
+        .logo-font {
+            font-family: 'Roboto Mono', monospace;
+        }
+
+        .main-card {
+            background-color: var(--card-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px var(--card-shadow);
+            border: 1px solid var(--card-border);
+        }
+        
         .chart-container {
             position: relative;
             width: 100%;
-            max-width: 900px;
+            max-width: 1000px;
             margin-left: auto;
             margin-right: auto;
-            height: 450px; /* Increased height for more items */
-            max-height: 60vh;
+            height: 500px;
+            max-height: 70vh;
         }
-        @media (min-width: 768px) {
-            .chart-container {
-                height: 550px;
-            }
+        @media (min-width: 768px) { .chart-container { height: 600px; } }
+        
+        .filter-btn {
+            background-color: var(--card-border);
+            color: var(--text-color);
+            transition: all 0.2s;
+        }
+        .filter-btn:hover {
+            opacity: 0.8;
         }
         .active-filter {
-            background-color: #44403C !important; /* stone-700 */
-            color: #FFFFFF !important;
+            background-color: var(--accent-color) !important;
+            color: white !important;
+            box-shadow: 0 4px 14px 0 var(--accent-glow);
         }
     </style>
 </head>
-<body class="text-stone-800">
+<body class="antialiased">
 
-    <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl">
+    <!-- ▼▼▼ REUSABLE HEADER COMPONENT ▼▼▼ -->
+    <header id="site-header" style="position: fixed; top: 0; left: 0; right: 0; z-index: 50; transition: all 0.3s ease;">
+        <nav style="max-width: 1280px; margin-left: auto; margin-right: auto; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+            <a href="index.html" style="font-size: 1.5rem; line-height: 2rem; font-weight: 700; font-family: 'Roboto Mono', monospace; letter-spacing: -0.05em; color: var(--header-text-color); text-decoration: none; transition: color 0.5s;">
+                <span style="color: var(--accent-color);">7</span>Piracy
+            </a>
+            <div id="desktop-nav" style="display: none; align-items: center; gap: 2rem;">
+                <a href="index.html" style="color: var(--text-color); transition: color 0.3s; font-weight: 600; text-decoration: none;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='var(--text-color)'">Home</a>
+                <a href="about.html" style="color: var(--text-color); transition: color 0.3s; font-weight: 600; text-decoration: none;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='var(--text-color)'">About</a>
+                <button id="theme-toggle-desktop" style="background-color: var(--bg-color-end); border-radius: 9999px; cursor: pointer; transition: all 0.4s ease; box-shadow: -5px -5px 10px var(--neumorphism-shadow-light), 5px 5px 10px var(--neumorphism-shadow-dark); width: 2.5rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; position: relative; border: none;">
+                    <svg class="sun-icon" style="width: 1.25rem; height: 1.25rem; color: #FBBF24;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M12 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <svg class="moon-icon" style="width: 1.25rem; height: 1.25rem; color: #818cf8; position: absolute;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                </button>
+            </div>
+            <div id="mobile-menu-button-container">
+                <button id="mobile-menu-button" style="color: var(--header-text-color); border: none; background: none; cursor: pointer;">
+                    <svg style="width: 1.5rem; height: 1.5rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+        </nav>
+        <div id="mobile-menu" style="display: none; background-color: var(--card-bg); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);">
+            <div style="padding: 0.5rem 0.75rem 0.75rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                <a href="index.html" style="display: block; padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-weight: 600; color: var(--text-color); text-decoration: none;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='var(--text-color)'">Home</a>
+                <a href="about.html" style="display: block; padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-weight: 600; color: var(--text-color); text-decoration: none;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='var(--text-color)'">About</a>
+                <div style="padding-top: 1rem;">
+                    <button id="theme-toggle-mobile" style="background-color: var(--bg-color-end); border-radius: 9999px; cursor: pointer; transition: all 0.4s ease; box-shadow: -5px -5px 10px var(--neumorphism-shadow-light), 5px 5px 10px var(--neumorphism-shadow-dark); width: 3rem; height: 3rem; display: flex; align-items: center; justify-content: center; position: relative; border: none;">
+                         <svg class="sun-icon" style="width: 1.5rem; height: 1.5rem; color: #FBBF24;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M12 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                         <svg class="moon-icon" style="width: 1.5rem; height: 1.5rem; color: #818cf8; position: absolute;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- ▲▲▲ END OF HEADER ▲▲▲ -->
+
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl" style="padding-top: 6rem;">
 
         <header class="text-center mb-8">
-            <h1 class="text-3xl md:text-4xl font-bold text-stone-900">Digital Piracy Landscape</h1>
-            <p class="mt-2 text-lg text-stone-600">Top User-Mentioned Platforms</p>
-            <div class="mt-4 max-w-3xl mx-auto bg-amber-100 border-l-4 border-amber-500 text-amber-800 p-4 rounded-md shadow-sm" role="alert">
-                <p class="font-bold">Disclaimer</p>
-                            </div>
+            <h1 class="text-3xl md:text-4xl font-bold text-[var(--header-text-color)]">Movies & Series</h1>
+            <p class="mt-2 text-lg text-[var(--text-color)]">Top User-Mentioned Platforms & Apps</p>
         </header>
 
-        <main class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+        <div class="main-card p-6 md:p-8">
             
+            
+
+            <section id="priority-platforms" class="bg-[var(--accent-glow)] p-6 rounded-lg mb-8">
+                <h2 class="text-2xl font-bold text-center mb-6 text-[var(--header-text-color)]">Priority Platforms</h2>
+                <div id="priority-platform-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"></div>
+            </section>
+
+            <section id="other-platforms" class="bg-[var(--card-border)] p-6 rounded-lg mb-8">
+                <h2 class="text-2xl font-bold text-center mb-6 text-[var(--header-text-color)]">Other Platforms</h2>
+                <div id="other-platform-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"></div>
+            </section>
+
+            <section id="mobile-apps" class="bg-[var(--accent-glow)] p-6 rounded-lg">
+                <h2 class="text-2xl font-bold text-center mb-6 text-[var(--header-text-color)]">Mobile Apps</h2>
+                <div id="app-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl mx-auto"></div>
+            </section>
+
             <div id="filter-controls" class="mb-8">
-                <h3 class="font-semibold text-stone-700 mb-3 text-center">Filter by Access Method</h3>
+                <h3 class="font-semibold text-[var(--text-color)] mb-3 text-center">Filter Website Platforms by Type</h3>
                 <div class="flex flex-wrap justify-center gap-2 max-w-md mx-auto">
-                    <button data-filter="All" class="filter-btn flex-grow px-4 py-2 bg-stone-200 text-stone-700 rounded-md hover:bg-stone-300 transition-colors duration-200 active-filter">All</button>
-                    <button data-filter="Streaming" class="filter-btn flex-grow px-4 py-2 bg-stone-200 text-stone-700 rounded-md hover:bg-stone-300 transition-colors duration-200">Streaming</button>
-                    <button data-filter="Torrent" class="filter-btn flex-grow px-4 py-2 bg-stone-200 text-stone-700 rounded-md hover:bg-stone-300 transition-colors duration-200">Torrent</button>
+                    <button data-filter="All" class="filter-btn flex-grow px-4 py-2 rounded-md active-filter">All</button>
+                    <button data-filter="Streaming" class="filter-btn flex-grow px-4 py-2 rounded-md">Streaming</button>
+                    <button data-filter="Torrent" class="filter-btn flex-grow px-4 py-2 rounded-md">Torrent</button>
                 </div>
             </div>
 
             <div class="mb-12">
-                <h2 class="text-xl font-bold mb-4 text-center text-stone-900">Relative Mentions Comparison</h2>
+                <h2 class="text-xl font-bold mb-4 text-center text-[var(--header-text-color)]">Website Mentions Comparison</h2>
                 <div class="chart-container">
                     <canvas id="piracyChart"></canvas>
                 </div>
             </div>
+        </div>
 
-            <div id="platform-directory" class="pt-8 border-t">
-                <h2 class="text-2xl font-bold text-center mb-6 text-stone-900">Platform Directory</h2>
-                <div id="platform-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                    <!-- Platform cards will be injected here by JavaScript -->
-                </div>
-            </div>
-
-        </main>
-
-        <footer class="w-full text-center p-6 text-gray-600">
-  <div class="border-t border-gray-300 pt-6">
-    <p class="text-sm">
-      Made with <span class="text-red-500">&hearts;</span> by <strong>Ann</strong>
-    </p>
-    <p class="text-sm mt-2">
-      Email: 
-      <a href="mailto:anjanchaubey0.com" class="text-blue-500 hover:text-blue-700 transition-colors">
-        anjanchaubey0.com
-      </a>
-    </p>
-    <div class="flex items-center justify-center space-x-4 mt-4">
-      <!-- Mail -->
-      <a href="mailto:anjanchaubey0.com" class="text-gray-500 hover:text-gray-800 transition-colors">
-        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg>
-      </a>
-      <!-- GitHub -->
-      <a href="https://github.com/Anjanchaubey" target="_blank" class="text-gray-500 hover:text-gray-800 transition-colors">
-        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.6 0-12 5.4-12 12 0 5.3 3.4 9.8 8.2 11.4.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.5-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2.9-.3 2-.4 3-.4 1 0 2 .1 3 .4 2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6C20.6 21.8 24 17.3 24 12c0-6.6-5.4-12-12-12z"></path></svg>
-      </a>
-      <!-- Instagram -->
-      <a href="https://instagram.com/anjanchaubey07" target="_blank" class="text-gray-500 hover:text-gray-800 transition-colors">
-        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M7 2C4.2 2 2 4.2 2 7v10c0 2.8 2.2 5 5 5h10c2.8 0 5-2.2 5-5V7c0-2.8-2.2-5-5-5H7zm10 2c1.7 0 3 1.3 3 3v10c0 1.7-1.3 3-3 3H7c-1.7 0-3-1.3-3-3V7c0-1.7 1.3-3 3-3h10zm-5 3c-2.8 0-5 2.2-5 5s2.2 5 5 5 5-2.2 5-5-2.2-5-5-5zm0 2c1.7 0 3 1.3 3 3s-1.3 3-3 3-3-1.3-3-3 1.3-3 3-3zm4.5-3c-.8 0-1.5.7-1.5 1.5S15.7 8 16.5 8 18 7.3 18 6.5 17.3 4 16.5 4z"></path></svg>
-      </a>
-    </div>
-    <p class="text-xs text-gray-400 mt-4">© 2025 All Rights Reserved</p>
-  </div>
-</footer>
-    </div>
+        <footer class="text-center mt-8 py-4 text-[var(--footer-text-color)] text-sm">
+            <p>Data sourced from public social media and forum discussions for research purposes.</p>
+        </footer>
+    </main>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            let chart; // Moved chart declaration to the top of the scope
+            
+            // ===================================
+            // HEADER SCRIPT LOGIC
+            // ===================================
+            const themeToggles = document.querySelectorAll('#theme-toggle-desktop, #theme-toggle-mobile');
+            const sunIcons = document.querySelectorAll('.sun-icon');
+            const moonIcons = document.querySelectorAll('.moon-icon');
+            const htmlElement = document.documentElement;
+
+            const applyTheme = (theme) => {
+                if (theme === 'dark') {
+                    htmlElement.classList.add('dark');
+                    htmlElement.classList.remove('light');
+                    sunIcons.forEach(i => { i.style.transform = 'rotate(180deg) scale(0)'; i.style.opacity = '0'; });
+                    moonIcons.forEach(i => { i.style.transform = 'rotate(0) scale(1)'; i.style.opacity = '1'; });
+                } else {
+                    htmlElement.classList.remove('dark');
+                    htmlElement.classList.add('light');
+                    sunIcons.forEach(i => { i.style.transform = 'rotate(0) scale(1)'; i.style.opacity = '1'; });
+                    moonIcons.forEach(i => { i.style.transform = 'rotate(-180deg) scale(0)'; i.style.opacity = '0'; });
+                }
+                localStorage.setItem('theme', theme);
+                // After applying theme, update chart if it exists
+                if(chart) updateChartColors();
+            };
+
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (savedTheme) { applyTheme(savedTheme); }
+            else if (prefersDark) { applyTheme('dark'); }
+            else { applyTheme('light'); }
+
+            themeToggles.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const isDark = htmlElement.classList.contains('dark');
+                    applyTheme(isDark ? 'light' : 'dark');
+                });
+            });
+            
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const desktopNav = document.getElementById('desktop-nav');
+            const mobileMenuBtnContainer = document.getElementById('mobile-menu-button-container');
+
+            const handleResize = () => {
+                if (window.innerWidth >= 768) {
+                    desktopNav.style.display = 'flex';
+                    mobileMenuBtnContainer.style.display = 'none';
+                    mobileMenu.style.display = 'none';
+                } else {
+                    desktopNav.style.display = 'none';
+                    mobileMenuBtnContainer.style.display = 'block';
+                }
+            };
+
+            mobileMenuButton.addEventListener('click', () => {
+                const isHidden = mobileMenu.style.display === 'none';
+                mobileMenu.style.display = isHidden ? 'block' : 'none';
+            });
+
+            window.addEventListener('resize', handleResize);
+            handleResize();
+
+            const header = document.getElementById('site-header');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 10) {
+                    header.style.backgroundColor = 'var(--card-bg)';
+                    header.style.backdropFilter = 'blur(10px)';
+                    header.style.webkitBackdropFilter = 'blur(10px)';
+                    header.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+                } else {
+                    header.style.backgroundColor = 'transparent';
+                    header.style.backdropFilter = 'none';
+                    header.style.webkitBackdropFilter = 'none';
+                    header.style.boxShadow = 'none';
+                }
+            });
+
+            // ===================================
+            // REPORT PAGE SPECIFIC LOGIC
+            // ===================================
             const platformData = [
-                { name: 'Olamovies', mentions: 100, type: 'Streaming' },
-                { name: 'Vegamovies.is', mentions: 99, type: 'Streaming' },
-                { name: 'Fmovies', mentions: 98, type: 'Streaming' },
-                { name: 'Moviesmod', mentions: 95, type: 'Streaming' },
-                { name: 'The Pirate Bay', mentions: 92, type: 'Torrent' },
-                { name: '123movies', mentions: 85, type: 'Streaming' },
-                { name: 'RARBG', mentions: 78, type: 'Torrent' },
-                { name: 'Putlocker', mentions: 75, type: 'Streaming' },
-                { name: '1337x', mentions: 68, type: 'Torrent' },
-                { name: 'YTS.mx', mentions: 62, type: 'Torrent' },
-                { name: 'SolarMovie', mentions: 55, type: 'Streaming' },
-                { name: 'GoMovies', mentions: 49, type: 'Streaming' },
-                { name: 'Soap2day', mentions: 45, type: 'Streaming' }
+                { name: 'Olamovies', mentions: 100, type: 'Streaming', priority: true },
+                { name: 'Vegamovies.is', mentions: 99, type: 'Streaming', priority: true },
+                { name: 'Moviesmod', mentions: 96, type: 'Streaming', priority: true },
+                { name: 'YTS.mx', mentions: 94, type: 'Torrent', priority: true },
+                { name: 'UHD Movies', mentions: 93, type: 'Streaming', priority: true },
+                { name: 'Fmovies', mentions: 98, type: 'Streaming', priority: false },
+                { name: 'The Pirate Bay', mentions: 92, type: 'Torrent', priority: false },
+                { name: '123movies', mentions: 85, type: 'Streaming', priority: false },
+                { name: 'RARBG', mentions: 78, type: 'Torrent', priority: false },
+                { name: 'Putlocker', mentions: 75, type: 'Streaming', priority: false },
+                { name: '1337x', mentions: 68, type: 'Torrent', priority: false },
+                { name: 'Zharmovies', mentions: 65, type: 'Streaming', priority: false },
+                { name: 'Mkvcinemas', mentions: 64, type: 'Streaming', priority: false },
+                { name: 'HDHub4u', mentions: 61, type: 'Streaming', priority: false },
+                { name: 'Filmywap', mentions: 60, type: 'Streaming', priority: false },
+                { name: 'Katmovies HD', mentions: 58, type: 'Streaming', priority: false },
+                { name: 'SolarMovie', mentions: 55, type: 'Streaming', priority: false },
+                { name: 'Filmyfly', mentions: 52, type: 'Streaming', priority: false },
+                { name: 'Extratorrent', mentions: 51, type: 'Torrent', priority: false },
+                { name: 'Moonflix.in', mentions: 50, type: 'Streaming', priority: false },
+                { name: 'GoMovies', mentions: 49, type: 'Streaming', priority: false },
+                { name: 'Soap2day', mentions: 45, type: 'Streaming', priority: false }
+            ];
+            const appData = [
+                { name: 'Netmirror', query: 'netmirror premium apk download' },
+                { name: 'Castle', query: 'castle premium apk download' },
+                { name: 'Moviebox', query: 'moviebox premium apk download' }
             ];
 
             const filterButtons = document.querySelectorAll('.filter-btn');
-            const platformListDiv = document.getElementById('platform-list');
-
+            const priorityPlatformListDiv = document.getElementById('priority-platform-list');
+            const otherPlatformListDiv = document.getElementById('other-platform-list');
+            const appListDiv = document.getElementById('app-list');
             let currentFilter = 'All';
-            let chart;
+
+            const getChartColors = () => {
+                const isDark = document.documentElement.classList.contains('dark');
+                return {
+                    grid: isDark ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb',
+                    ticks: isDark ? '#d1d5db' : '#1f2937',
+                    accent: getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim(),
+                };
+            };
+            
+            const updateChartColors = () => {
+                if (!chart) return;
+                const colors = getChartColors();
+                chart.options.scales.x.grid.color = colors.grid;
+                chart.options.scales.x.ticks.color = colors.ticks;
+                chart.options.scales.y.grid.color = colors.grid;
+                chart.options.scales.y.ticks.color = colors.ticks;
+                chart.data.datasets[0].backgroundColor = chart.data.labels.map((label, index) => {
+                    const isPriority = platformData.find(p => p.name === label)?.priority;
+                    return isPriority ? `${colors.accent}CC` : `${colors.accent}99`; // 80% and 60% opacity
+                });
+                chart.data.datasets[0].borderColor = colors.accent;
+                chart.update();
+            };
 
             const renderChart = (data) => {
                 const ctx = document.getElementById('piracyChart').getContext('2d');
-                
+                const colors = getChartColors();
+
                 const chartData = {
                     labels: data.map(p => p.name),
                     datasets: [{
                         label: 'Relative Mentions',
                         data: data.map(p => p.mentions),
-                        backgroundColor: 'rgba(79, 70, 229, 0.7)', 
-                        borderColor: 'rgba(79, 70, 229, 1)',
+                        backgroundColor: data.map(p => p.priority ? `${colors.accent}CC` : `${colors.accent}99`),
+                        borderColor: colors.accent,
                         borderWidth: 1,
                         borderRadius: 4,
-                        hoverBackgroundColor: 'rgba(99, 102, 241, 0.8)'
                     }]
                 };
 
-                if (chart) {
-                    chart.destroy();
-                }
-
+                if (chart) chart.destroy();
                 chart = new Chart(ctx, {
                     type: 'bar',
                     data: chartData,
@@ -163,34 +351,53 @@
                         maintainAspectRatio: false,
                         plugins: { legend: { display: false } },
                         scales: {
-                            x: { beginAtZero: true, grid: { color: '#E7E5E4' }, ticks: { color: '#57534E' } },
-                            y: { grid: { display: false }, ticks: { color: '#44403C', font: { size: 10 } } }
+                            x: { beginAtZero: true, grid: { color: colors.grid }, ticks: { color: colors.ticks } },
+                            y: { grid: { display: false }, ticks: { color: colors.ticks, font: { size: 9 } } }
                         }
                     }
                 });
             };
 
-            const renderPlatformList = (data) => {
-                platformListDiv.innerHTML = ''; 
-                if (data.length === 0) {
-                    platformListDiv.innerHTML = `<p class="text-stone-500 sm:col-span-2 md:col-span-3 lg:col-span-4 xl:col-span-5 text-center">No platforms match this filter.</p>`;
-                    return;
-                }
-                data.forEach(platform => {
-                    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(platform.name)}`;
-                    const card = document.createElement('div');
-                    card.className = 'bg-stone-50 rounded-lg shadow-md p-4 flex flex-col text-center items-center justify-between transition hover:shadow-xl';
-                    card.innerHTML = `
+            const createPlatformCard = (platform) => {
+                const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(platform.name)}`;
+                return `
+                    <div class="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg shadow-sm p-4 flex flex-col text-center items-center justify-between transition hover:shadow-xl hover:-translate-y-1">
                         <div>
-                            <h3 class="text-lg font-bold text-stone-800">${platform.name}</h3>
-                            <span class="text-xs font-semibold uppercase tracking-wider ${platform.type === 'Streaming' ? 'text-indigo-600' : 'text-teal-600'}">${platform.type}</span>
+                            <h3 class="text-lg font-bold text-[var(--header-text-color)]">${platform.name}</h3>
+                            <span class="text-xs font-semibold uppercase tracking-wider" style="color: var(--accent-color);">${platform.type}</span>
                         </div>
-                        <a href="${searchUrl}" target="_blank" rel="noopener noreferrer" class="w-full text-center bg-stone-700 text-white font-semibold py-2 px-4 rounded-md hover:bg-stone-800 transition-colors duration-200 mt-4">
+                        <a href="${searchUrl}" target="_blank" rel="noopener noreferrer" class="w-full text-center text-white font-semibold py-2 px-4 rounded-md transition-opacity duration-200 mt-4" style="background-color: var(--accent-color);">
                             Search
                         </a>
+                    </div>
+                `;
+            };
+            
+            const renderPlatforms = (data) => {
+                const priorityPlatforms = data.filter(p => p.priority);
+                const otherPlatforms = data.filter(p => !p.priority);
+
+                priorityPlatformListDiv.innerHTML = priorityPlatforms.length > 0 ? 
+                    priorityPlatforms.map(createPlatformCard).join('') : 
+                    `<p class="text-[var(--text-color)] col-span-full text-center">No priority platforms match this filter.</p>`;
+
+                otherPlatformListDiv.innerHTML = otherPlatforms.length > 0 ?
+                    otherPlatforms.map(createPlatformCard).join('') :
+                    `<p class="text-[var(--text-color)] col-span-full text-center">No other platforms match this filter.</p>`;
+            };
+            
+            const renderApps = () => {
+                appListDiv.innerHTML = appData.map(app => {
+                    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(app.query)}`;
+                    return `
+                        <div class="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg shadow-sm p-4 flex flex-col text-center items-center justify-between transition hover:shadow-xl hover:-translate-y-1">
+                            <h3 class="text-xl font-bold text-[var(--header-text-color)]">${app.name}</h3>
+                            <a href="${searchUrl}" target="_blank" rel="noopener noreferrer" class="w-full text-center text-white font-semibold py-2 px-4 rounded-md transition-opacity duration-200 mt-4" style="background-color: var(--accent-color);">
+                                Search for APK
+                            </a>
+                        </div>
                     `;
-                    platformListDiv.appendChild(card);
-                });
+                }).join('');
             };
 
             const getFilteredData = () => {
@@ -203,17 +410,17 @@
                     currentFilter = button.dataset.filter;
                     filterButtons.forEach(btn => btn.classList.remove('active-filter'));
                     button.classList.add('active-filter');
-
                     const filteredData = getFilteredData();
                     renderChart(filteredData);
-                    renderPlatformList(filtered.data);
+                    renderPlatforms(filteredData);
                 });
             });
 
             // Initial render
             const initialData = getFilteredData();
             renderChart(initialData);
-            renderPlatformList(initialData);
+            renderPlatforms(initialData);
+            renderApps();
         });
     </script>
 </body>
