@@ -1,203 +1,302 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light"> <!-- Default to light theme, JS will override -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Online Software Piracy Landscape</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Chosen Palette: Warm Neutrals -->
-    <!-- Application Structure Plan: The application is designed as a single-page interactive dashboard. This structure was chosen to provide a comprehensive yet digestible overview of a complex topic. The user flow is centered around a primary filtering interaction (by platform type) which allows for self-guided exploration. This is more effective than a linear report, as users can focus on the aspects most relevant to their research. The structure includes: 1) A clear header with a prominent disclaimer. 2) An introductory section setting the educational context. 3) An interactive dashboard with filter buttons, a dynamic content grid for platforms, and a risk visualization chart. 4) An AI-powered security checklist generator. 5) A glossary for key terms. This design prioritizes clarity, user interaction, and responsible presentation of sensitive information. -->
-    <!-- Visualization & Content Choices: 
-        - Report Info: Commonly mentioned platforms for cracked software. -> Goal: Organize/Inform -> Viz/Presentation: Interactive card grid. -> Interaction: Filterable by category buttons (All, Torrent, DDL, etc.). -> Justification: Allows users to easily parse the different types of sources discussed online. -> Method: HTML/Tailwind grid updated with vanilla JS.
-        - Report Info: Associated risks of using pirated software. -> Goal: Inform/Compare -> Viz/Presentation: Horizontal Bar Chart. -> Interaction: Tooltips on hover provide more detail on each risk. -> Justification: A chart provides a more immediate visual impact of the prevalence and severity of risks compared to a simple list. -> Library: Chart.js (Canvas).
-        - Report Info: Educational security advice based on risks. -> Goal: Inform/Act -> Viz/Presentation: AI-Generated Checklist. -> Interaction: User clicks a button to generate a dynamic checklist. -> Justification: Provides actionable, educational content that enhances the app's purpose. -> Library/Method: Gemini API via Fetch.
-        - Report Info: Common jargon/terminology. -> Goal: Inform -> Viz/Presentation: Simple two-column list. -> Interaction: None. -> Justification: A glossary is a standard, effective format for definitions. -> Method: HTML/Tailwind.
-    -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+    
     <style>
+        /* ============================================
+        CSS Custom Properties for Theming
+        ============================================
+        */
+        :root {
+            /* -- LIGHT THEME (WHITE, BLACK, & #6600ff) -- */
+            --bg-color-start: #ffffff;
+            --bg-color-end: #f9fafb;
+            --text-color: #1f2937;
+            --header-text-color: #000000;
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --card-border: #e5e7eb;
+            --card-shadow: rgba(0, 0, 0, 0.07);
+            --accent-color: #6600ff;
+            --accent-glow: rgba(102, 0, 255, 0.25);
+            --footer-text-color: #4b5563;
+        }
+
+        html.dark {
+            /* -- DARK THEME (BLACK & PURPLE) -- */
+            --bg-color-start: #000000;
+            --bg-color-end: #0d0d0d;
+            --text-color: #d1d5db;
+            --header-text-color: #ffffff;
+            --card-bg: rgba(20, 20, 20, 0.7);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --card-shadow: rgba(0, 0, 0, 0.5);
+            --accent-color: #A78BFA;
+            --footer-text-color: #9ca3af;
+        }
+
+        /* ============================================
+        Base & Page-Specific Styles
+        ============================================
+        */
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #FDFBF8;
-            color: #403A35;
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color-start);
+            background-image: linear-gradient(135deg, var(--bg-color-start) 0%, var(--bg-color-end) 100%);
+            color: var(--text-color);
+            transition: background 0.5s ease, color 0.5s ease;
         }
-        .chart-container {
-            position: relative;
-            width: 100%;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-            height: 400px;
-            max-height: 50vh;
-        }
-        .nav-button {
-            transition: all 0.3s ease;
-        }
+
+        .logo-font { font-family: 'Roboto Mono', monospace; }
+        .chart-container { position: relative; width: 100%; max-width: 800px; margin: auto; height: 400px; max-height: 50vh; }
+        
+        .nav-button { transition: all 0.3s ease; }
         .nav-button.active {
-            background-color: #D4A373;
-            color: #FEFBF6;
+            background-color: var(--accent-color);
+            color: white;
             transform: translateY(-2px);
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            box-shadow: 0 4px 14px 0 var(--accent-glow);
         }
+        
         .platform-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            box-shadow: 0 4px 6px -1px var(--card-shadow);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         .platform-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            box-shadow: 0 10px 15px -3px var(--card-shadow);
         }
+        
         .gemini-button {
+            background-color: var(--accent-color);
+            color: white;
             transition: all 0.3s ease;
         }
         .gemini-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(212, 163, 115, 0.3);
+            box-shadow: 0 4px 8px var(--accent-glow);
         }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
         .loader {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: #D4A373;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-left-color: var(--accent-color);
             border-radius: 50%;
             width: 40px;
             height: 40px;
             animation: spin 1s linear infinite;
         }
-        .checklist li {
-            position: relative;
-            padding-left: 28px;
-            margin-bottom: 12px;
-        }
+
+        .checklist li { position: relative; padding-left: 28px; margin-bottom: 12px; }
         .checklist li::before {
             content: '✔';
             position: absolute;
             left: 0;
             top: 2px;
-            color: #D4A373;
+            color: var(--accent-color);
             font-weight: bold;
         }
     </style>
 </head>
 <body class="antialiased">
-    <div class="container mx-auto p-4 sm:p-6 md:p-8 max-w-7xl">
+    
+    <!-- ▼▼▼ REUSABLE HEADER COMPONENT ▼▼▼ -->
+    <header id="site-header" style="position: fixed; top: 0; left: 0; right: 0; z-index: 50; transition: all 0.3s ease;">
+        <nav style="max-width: 1280px; margin-left: auto; margin-right: auto; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+            <a href="index.html" style="font-size: 1.5rem; line-height: 2rem; font-weight: 700; font-family: 'Roboto Mono', monospace; letter-spacing: -0.05em; color: var(--header-text-color); text-decoration: none; transition: color 0.5s;">
+                <span style="color: var(--accent-color);">7</span>Piracy
+            </a>
+            <div id="desktop-nav" style="display: none; align-items: center; gap: 2rem;">
+                <a href="index.html" style="color: var(--text-color); transition: color 0.3s; font-weight: 600; text-decoration: none;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='var(--text-color)'">Home</a>
+                <a href="about.html" style="color: var(--text-color); transition: color 0.3s; font-weight: 600; text-decoration: none;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='var(--text-color)'">About</a>
+                <button id="theme-toggle-desktop" style="background-color: var(--bg-color-end); border-radius: 9999px; cursor: pointer; transition: all 0.4s ease; box-shadow: -5px -5px 10px var(--neumorphism-shadow-light), 5px 5px 10px var(--neumorphism-shadow-dark); width: 2.5rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; position: relative; border: none;">
+                    <svg class="sun-icon" style="width: 1.25rem; height: 1.25rem; color: #FBBF24;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M12 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <svg class="moon-icon" style="width: 1.25rem; height: 1.25rem; color: #818cf8; position: absolute;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                </button>
+            </div>
+            <div id="mobile-menu-button-container">
+                <button id="mobile-menu-button" style="color: var(--header-text-color); border: none; background: none; cursor: pointer;">
+                    <svg style="width: 1.5rem; height: 1.5rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+        </nav>
+        <div id="mobile-menu" style="display: none; background-color: var(--card-bg); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);">
+            <div style="padding: 0.5rem 0.75rem 0.75rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                <a href="index.html" style="display: block; padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-weight: 600; color: var(--text-color); text-decoration: none;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='var(--text-color)'">Home</a>
+                <a href="about.html" style="display: block; padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-weight: 600; color: var(--text-color); text-decoration: none;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='var(--text-color)'">About</a>
+                <div style="padding-top: 1rem;">
+                    <button id="theme-toggle-mobile" style="background-color: var(--bg-color-end); border-radius: 9999px; cursor: pointer; transition: all 0.4s ease; box-shadow: -5px -5px 10px var(--neumorphism-shadow-light), 5px 5px 10px var(--neumorphism-shadow-dark); width: 3rem; height: 3rem; display: flex; align-items: center; justify-content: center; position: relative; border: none;">
+                         <svg class="sun-icon" style="width: 1.5rem; height: 1.5rem; color: #FBBF24;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M12 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                         <svg class="moon-icon" style="width: 1.5rem; height: 1.5rem; color: #818cf8; position: absolute;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- ▲▲▲ END OF HEADER ▲▲▲ -->
+    
+    <div class="container mx-auto p-4 sm:p-6 md:p-8 max-w-7xl" style="padding-top: 6rem;">
 
         <header class="text-center mb-8">
-            <h1 class="text-3xl md:text-4xl font-bold text-[#6F4E37]">Online Software Piracy Landscape</h1>
-            <p class="text-md text-gray-600 mt-2">An Educational Overview Based on Public Online Discussions</p>
-            <div class="mt-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md shadow-sm max-w-4xl mx-auto">
-                <p class="font-bold">Disclaimer for Educational Purposes</p>
-                
-            </div>
+            <h1 class="text-3xl md:text-4xl font-bold text-[var(--header-text-color)]">Online Software Piracy Landscape</h1>
+            <p class="text-md text-[var(--text-color)] mt-2">An Educational Overview Based on Public Online Discussions</p>
         </header>
 
         <main>
-           
-
             <section id="dashboard" class="mb-12">
-                <h2 class="text-2xl font-semibold text-center text-[#8C6D53] mb-6">Platform Analysis</h2>
-                
-                <div id="filters" class="flex flex-wrap justify-center gap-2 md:gap-4 mb-8">
-                </div>
-
-                <div id="platforms-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                </div>
+                <h2 class="text-2xl font-semibold text-center text-[var(--header-text-color)] opacity-80 mb-6">Platform Analysis</h2>
+                <div id="filters" class="flex flex-wrap justify-center gap-2 md:gap-4 mb-8"></div>
+                <div id="platforms-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
             </section>
 
-            <section id="risk-analysis" class="mb-12 bg-white/50 p-6 rounded-lg shadow-sm">
-                <h2 class="text-2xl font-semibold text-center text-[#8C6D53] mb-4">Commonly Discussed Risks</h2>
-                <p class="text-center text-gray-600 max-w-3xl mx-auto mb-6">
-                    Discussions around cracked software are often accompanied by warnings from other users. The chart below visualizes the frequency of mentions for different types of risks associated with these downloads. Malware and adware are the most commonly cited dangers.
-                </p>
+            <section id="risk-analysis" class="mb-12 bg-[var(--card-bg)] border border-[var(--card-border)] p-6 rounded-lg shadow-sm">
+                <h2 class="text-2xl font-semibold text-center text-[var(--header-text-color)] opacity-80 mb-4">Commonly Discussed Risks</h2>
+                <p class="text-center text-[var(--text-color)] max-w-3xl mx-auto mb-6">Discussions around cracked software are often accompanied by warnings from other users. The chart below visualizes the frequency of mentions for different types of risks associated with these downloads.</p>
                 <div class="chart-container">
                     <canvas id="riskChart"></canvas>
                 </div>
             </section>
 
-            <section id="ai-guidance" class="mb-12 bg-white/50 p-6 rounded-lg shadow-sm">
-                <h2 class="text-2xl font-semibold text-center text-[#8C6D53] mb-4">✨ AI-Powered Security Guidance</h2>
-                <p class="text-center text-gray-600 max-w-3xl mx-auto mb-6">
-                    Understanding risks is the first step. To provide actionable advice, you can use the Gemini AI to generate a general-purpose checklist for safer online file downloading practices.
-                </p>
+            <section id="ai-guidance" class="mb-12 bg-[var(--card-bg)] border border-[var(--card-border)] p-6 rounded-lg shadow-sm">
+                <h2 class="text-2xl font-semibold text-center text-[var(--header-text-color)] opacity-80 mb-4">✨ AI-Powered Security Guidance</h2>
+                <p class="text-center text-[var(--text-color)] max-w-3xl mx-auto mb-6">To provide actionable advice, use the Gemini AI to generate a general-purpose checklist for safer online file downloading practices.</p>
                 <div class="text-center mb-6">
-                    <button id="generate-checklist-btn" class="gemini-button bg-[#D4A373] text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-[#C39363]">
-                        Generate Security Checklist
-                    </button>
+                    <button id="generate-checklist-btn" class="gemini-button font-bold py-3 px-6 rounded-lg shadow-md">Generate Security Checklist</button>
                 </div>
-                <div id="checklist-container" class="max-w-3xl mx-auto p-4 bg-gray-50 rounded-lg min-h-[100px] flex items-center justify-center">
-                    <p class="text-gray-500">Your generated checklist will appear here.</p>
+                <div id="checklist-container" class="max-w-3xl mx-auto p-4 bg-[var(--bg-color-end)] rounded-lg min-h-[100px] flex items-center justify-center">
+                    <p class="text-[var(--text-color)] opacity-70">Your generated checklist will appear here.</p>
                 </div>
             </section>
 
             <section id="glossary">
-                <h2 class="text-2xl font-semibold text-center text-[#8C6D53] mb-6">Common Terminology</h2>
-                <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-                    <div class="bg-white/50 p-4 rounded-lg shadow-sm">
-                        <h3 class="font-semibold text-lg text-[#6F4E37]">Torrent</h3>
-                        <p class="text-gray-600">A decentralized peer-to-peer (P2P) file-sharing system. Users download files from each other rather than a central server. Requires a client like qBittorrent or uTorrent.</p>
-                    </div>
-                    <div class="bg-white/50 p-4 rounded-lg shadow-sm">
-                        <h3 class="font-semibold text-lg text-[#6F4E37]">Direct Download (DDL)</h3>
-                        <p class="text-gray-600">Downloading a file directly from a web server via a browser. Often involves file-hosting services which may have speed or size limits.</p>
-                    </div>
-                    <div class="bg-white/50 p-4 rounded-lg shadow-sm">
-                        <h3 class="font-semibold text-lg text-[#6F4E37]">Repack</h3>
-                        <p class="text-gray-600">A highly compressed version of a game or software, often with updates and DLC included. Designed for faster downloads and easier installation.</p>
-                    </div>
-                    <div class="bg-white/50 p-4 rounded-lg shadow-sm">
-                        <h3 class="font-semibold text-lg text-[#6F4E37]">Cracks / Keygen</h3>
-                        <p class="text-gray-600">A 'crack' is a modified file that bypasses copy protection. A 'keygen' (key generator) is a program that creates license keys to activate software.</p>
-                    </div>
+                <h2 class="text-2xl font-semibold text-center text-[var(--header-text-color)] opacity-80 mb-6">Common Terminology</h2>
+                <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="platform-card p-4 rounded-lg"><h3 class="font-semibold text-lg text-[var(--header-text-color)]">Torrent</h3><p class="text-[var(--text-color)]">A decentralized peer-to-peer (P2P) file-sharing system. Users download files from each other rather than a central server.</p></div>
+                    <div class="platform-card p-4 rounded-lg"><h3 class="font-semibold text-lg text-[var(--header-text-color)]">Direct Download (DDL)</h3><p class="text-[var(--text-color)]">Downloading a file directly from a web server via a browser, often involving file-hosting services.</p></div>
+                    <div class="platform-card p-4 rounded-lg"><h3 class="font-semibold text-lg text-[var(--header-text-color)]">Repack</h3><p class="text-[var(--text-color)]">A highly compressed version of a game or software. Designed for faster downloads.</p></div>
+                    <div class="platform-card p-4 rounded-lg"><h3 class="font-semibold text-lg text-[var(--header-text-color)]">Cracks / Keygen</h3><p class="text-[var(--text-color)]">A 'crack' is a modified file that bypasses copy protection. A 'keygen' creates license keys to activate software.</p></div>
                 </div>
             </section>
         </main>
 
-        <footer class="w-full text-center p-6 text-gray-600">
-  <div class="border-t border-gray-300 pt-6">
-    <p class="text-sm">
-      Made with <span class="text-red-500">&hearts;</span> by <strong>Ann</strong>
-    </p>
-    <p class="text-sm mt-2">
-      Email: 
-      <a href="mailto:anjanchaubey0.com" class="text-blue-500 hover:text-blue-700 transition-colors">
-        anjanchaubey0.com
-      </a>
-    </p>
-    <div class="flex items-center justify-center space-x-4 mt-4">
-      <!-- Mail -->
-      <a href="mailto:anjanchaubey0.com" class="text-gray-500 hover:text-gray-800 transition-colors">
-        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg>
-      </a>
-      <!-- GitHub -->
-      <a href="https://github.com/Anjanchaubey" target="_blank" class="text-gray-500 hover:text-gray-800 transition-colors">
-        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.6 0-12 5.4-12 12 0 5.3 3.4 9.8 8.2 11.4.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.5-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2.9-.3 2-.4 3-.4 1 0 2 .1 3 .4 2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6C20.6 21.8 24 17.3 24 12c0-6.6-5.4-12-12-12z"></path></svg>
-      </a>
-      <!-- Instagram -->
-      <a href="https://instagram.com/anjanchaubey07" target="_blank" class="text-gray-500 hover:text-gray-800 transition-colors">
-        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M7 2C4.2 2 2 4.2 2 7v10c0 2.8 2.2 5 5 5h10c2.8 0 5-2.2 5-5V7c0-2.8-2.2-5-5-5H7zm10 2c1.7 0 3 1.3 3 3v10c0 1.7-1.3 3-3 3H7c-1.7 0-3-1.3-3-3V7c0-1.7 1.3-3 3-3h10zm-5 3c-2.8 0-5 2.2-5 5s2.2 5 5 5 5-2.2 5-5-2.2-5-5-5zm0 2c1.7 0 3 1.3 3 3s-1.3 3-3 3-3-1.3-3-3 1.3-3 3-3zm4.5-3c-.8 0-1.5.7-1.5 1.5S15.7 8 16.5 8 18 7.3 18 6.5 17.3 4 16.5 4z"></path></svg>
-      </a>
-    </div>
-    <p class="text-xs text-gray-400 mt-4">© 2025 All Rights Reserved</p>
-  </div>
-</footer>
+        <footer class="w-full text-center p-6 text-[var(--footer-text-color)]">
+            <div class="border-t border-[var(--card-border)] pt-6">
+                <p class="text-sm">Made with <span class="text-red-500">&hearts;</span> by <strong>Anjan Chaubey</strong></p>
+                 <div class="flex items-center justify-center space-x-4 mt-4">
+                    <a href="mailto:anjanchaubey0@gmail.com" class="text-[var(--footer-text-color)] hover:text-[var(--accent-color)] transition-colors"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884zM18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg></a>
+                    <a href="https://github.com/Anjanchaubey" target="_blank" class="text-[var(--footer-text-color)] hover:text-[var(--accent-color)] transition-colors"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.6 0-12 5.4-12 12 0 5.3 3.4 9.8 8.2 11.4.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.5-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2.9-.3 2-.4 3-.4 1 0 2 .1 3 .4 2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6C20.6 21.8 24 17.3 24 12c0-6.6-5.4-12-12-12z"></path></svg></a>
+                    <a href="https://instagram.com/anjanchaubey07" target="_blank" class="text-[var(--footer-text-color)] hover:text-[var(--accent-color)] transition-colors"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M7 2C4.2 2 2 4.2 2 7v10c0 2.8 2.2 5 5 5h10c2.8 0 5-2.2 5-5V7c0-2.8-2.2-5-5-5H7zm10 2c1.7 0 3 1.3 3 3v10c0 1.7-1.3 3-3 3H7c-1.7 0-3-1.3-3-3V7c0-1.7 1.3-3 3-3h10zm-5 3c-2.8 0-5 2.2-5 5s2.2 5 5 5 5-2.2 5-5-2.2-5-5-5zm0 2c1.7 0 3 1.3 3 3s-1.3 3-3 3-3-1.3-3-3 1.3-3 3-3zm4.5-3c-.8 0-1.5.7-1.5 1.5S15.7 8 16.5 8 18 7.3 18 6.5 17.3 4 16.5 4z"></path></svg></a>
+                </div>
+                <p class="text-xs mt-4">© 2025 7 Piracy. All Rights Reserved.</p>
+            </div>
+        </footer>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            let riskChart; // Hoisted chart variable
+            // ===================================
+            // HEADER SCRIPT LOGIC
+            // ===================================
+            const themeToggles = document.querySelectorAll('#theme-toggle-desktop, #theme-toggle-mobile');
+            const sunIcons = document.querySelectorAll('.sun-icon');
+            const moonIcons = document.querySelectorAll('.moon-icon');
+            const htmlElement = document.documentElement;
+
+            const applyTheme = (theme) => {
+                if (theme === 'dark') {
+                    htmlElement.classList.add('dark');
+                    htmlElement.classList.remove('light');
+                    sunIcons.forEach(i => { i.style.transform = 'rotate(180deg) scale(0)'; i.style.opacity = '0'; });
+                    moonIcons.forEach(i => { i.style.transform = 'rotate(0) scale(1)'; i.style.opacity = '1'; });
+                } else {
+                    htmlElement.classList.remove('dark');
+                    htmlElement.classList.add('light');
+                    sunIcons.forEach(i => { i.style.transform = 'rotate(0) scale(1)'; i.style.opacity = '1'; });
+                    moonIcons.forEach(i => { i.style.transform = 'rotate(-180deg) scale(0)'; i.style.opacity = '0'; });
+                }
+                localStorage.setItem('theme', theme);
+                if(riskChart) updateChartColors();
+            };
+
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (savedTheme) { applyTheme(savedTheme); }
+            else if (prefersDark) { applyTheme('dark'); }
+            else { applyTheme('light'); }
+
+            themeToggles.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const isDark = htmlElement.classList.contains('dark');
+                    applyTheme(isDark ? 'light' : 'dark');
+                });
+            });
+            
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const desktopNav = document.getElementById('desktop-nav');
+            const mobileMenuBtnContainer = document.getElementById('mobile-menu-button-container');
+
+            const handleResize = () => {
+                if (window.innerWidth >= 768) {
+                    desktopNav.style.display = 'flex';
+                    mobileMenuBtnContainer.style.display = 'none';
+                    mobileMenu.style.display = 'none';
+                } else {
+                    desktopNav.style.display = 'none';
+                    mobileMenuBtnContainer.style.display = 'block';
+                }
+            };
+
+            mobileMenuButton.addEventListener('click', () => {
+                const isHidden = mobileMenu.style.display === 'none';
+                mobileMenu.style.display = isHidden ? 'block' : 'none';
+            });
+
+            window.addEventListener('resize', handleResize);
+            handleResize();
+
+            const header = document.getElementById('site-header');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 10) {
+                    header.style.backgroundColor = 'var(--card-bg)';
+                    header.style.backdropFilter = 'blur(10px)';
+                    header.style.webkitBackdropFilter = 'blur(10px)';
+                    header.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+                } else {
+                    header.style.backgroundColor = 'transparent';
+                    header.style.backdropFilter = 'none';
+                    header.style.webkitBackdropFilter = 'none';
+                    header.style.boxShadow = 'none';
+                }
+            });
+
+            // ===================================
+            // SOFTWARE PAGE SPECIFIC LOGIC
+            // ===================================
             const platformData = [
-                { name: 'r/Piracy (Reddit)', category: 'Community', description: 'A major subreddit for discussions, guides, and news related to digital piracy. Often a starting point for users seeking information and links.' },
-                { name: '1337x', category: 'Torrent', description: 'A popular public torrent tracker for a wide range of content, including software, games, and movies. Frequently mentioned for its large library.' },
-                { name: 'The Pirate Bay', category: 'Torrent', description: 'One of the oldest and most well-known public torrent indexing sites. Despite frequent domain changes, it remains a commonly cited source.' },
-                { name: 'RARBG', category: 'Torrent', description: 'Though now defunct, it is still frequently mentioned in older guides as a high-quality public tracker, known for reliable releases.' },
-                { name: 'RuTracker', category: 'Torrent', description: 'A large Russian-based semi-private torrent tracker. Often praised in discussions for having a vast and hard-to-find software collection.' },
-                { name: 'GetIntoPC', category: 'DDL', description: 'A widely mentioned Direct Download (DDL) site focused specifically on providing a large variety of Windows software with tutorials.' },
-                { name: 'FileCR', category: 'DDL', description: 'A Direct Download (DDL) site known for a clean interface and a wide array of software for Windows, macOS, and Android.' },
-                { name: 'FitGirl Repacks', category: 'Repacker', description: 'A well-known repacker of pirated video games. Famous for extreme compression, making large games much smaller to download.' },
-                { name: 'IGG-Games', category: 'DDL', description: 'A controversial Direct Download (DDL) site for games. While frequently mentioned, it is also often cited in discussions for potential security risks.' },
-                { name: 'SteamUnlocked', category: 'DDL', description: 'A Direct Download (DDL) site that provides pre-installed versions of PC games, aiming to simplify the process for users.' },
+                 { name: 'GetIntoPC', category: 'DDL', description: 'A widely mentioned Direct Download (DDL) site focused specifically on providing a large variety of Windows software with tutorials.' },
+                 { name: 'FileCR', category: 'DDL', description: 'A Direct Download (DDL) site known for a clean interface and a wide array of software for Windows, macOS, and Android.' },
+                 { name: 'Ask4PC', category: 'DDL', description: 'A direct download source for various PC software and applications, often mentioned for specific requests.' },
+                 { name: 'FileHippo', category: 'Freeware Host', description: 'A popular, legitimate source for freeware, but sometimes mentioned in piracy discussions for accessing older, unsupported software versions.' },
+                 { name: 'Creative Corner / Blogs', category: 'Community', description: 'Refers to various blogs and communities where users share creative software and assets, like plugins or templates.' },
+                 { name: '1337x', category: 'Torrent', description: 'A popular public torrent tracker for a wide range of content, including software, games, and movies. Frequently mentioned for its large library.' },
+                 { name: 'The Pirate Bay', category: 'Torrent', description: 'One of the oldest and most well-known public torrent indexing sites. Despite frequent domain changes, it remains a commonly cited source.' },
+                 { name: 'r/Piracy (Reddit)', category: 'Community', description: 'A major subreddit for discussions, guides, and news related to digital piracy. Often a starting point for users seeking information and links.' },
+                 { name: 'RARBG', category: 'Torrent', description: 'Though now defunct, it is still frequently mentioned in older guides as a high-quality public tracker, known for reliable releases.' },
+                 { name: 'RuTracker', category: 'Torrent', description: 'A large Russian-based semi-private torrent tracker. Often praised in discussions for having a vast and hard-to-find software collection.' }
             ];
 
             const filtersContainer = document.getElementById('filters');
@@ -206,7 +305,7 @@
             const checklistContainer = document.getElementById('checklist-container');
             let currentFilter = 'All';
 
-            const categories = ['All', 'Torrent', 'DDL', 'Repacker', 'Community'];
+            const categories = ['All', 'Torrent', 'DDL', 'Community', 'Freeware Host'];
             
             function renderFilters() {
                 filtersContainer.innerHTML = '';
@@ -214,7 +313,7 @@
                     const button = document.createElement('button');
                     button.textContent = category;
                     button.dataset.category = category;
-                    button.className = `nav-button px-4 py-2 rounded-full font-semibold text-sm md:text-base shadow-sm border border-gray-200 bg-white hover:bg-gray-50 ${currentFilter === category ? 'active' : ''}`;
+                    button.className = `nav-button px-4 py-2 rounded-full font-semibold text-sm md:text-base shadow-sm border border-[var(--card-border)] bg-[var(--card-bg)] hover:bg-[var(--card-border)] ${currentFilter === category ? 'active' : ''}`;
                     button.addEventListener('click', () => {
                         currentFilter = category;
                         renderFilters();
@@ -226,71 +325,85 @@
 
             function renderPlatforms() {
                 platformsGrid.innerHTML = '';
-                const filteredPlatforms = currentFilter === 'All'
-                    ? platformData
-                    : platformData.filter(p => p.category === currentFilter);
+                const filteredPlatforms = currentFilter === 'All' ? platformData : platformData.filter(p => p.category === currentFilter);
 
                 if (filteredPlatforms.length === 0) {
-                    platformsGrid.innerHTML = `<p class="text-center text-gray-500 md:col-span-2 lg:col-span-3">No platforms match this category.</p>`;
+                    platformsGrid.innerHTML = `<p class="text-center text-[var(--text-color)] md:col-span-2 lg:col-span-3">No platforms match this category.</p>`;
                     return;
                 }
 
                 filteredPlatforms.forEach(platform => {
                     const card = document.createElement('div');
-                    card.className = 'platform-card bg-white p-5 rounded-lg shadow-sm border border-gray-100 flex flex-col';
+                    card.className = 'platform-card p-5 flex flex-col';
                     card.innerHTML = `
                         <div class="flex-grow">
                             <div class="flex justify-between items-start mb-2">
-                                <a href="https://www.google.com/search?q=${encodeURIComponent(platform.name)}" target="_blank" rel="noopener noreferrer" class="text-xl font-bold text-[#6F4E37] hover:underline">${platform.name}</a>
-                                <span class="text-xs font-semibold text-white px-2 py-1 rounded-full ${getCategoryColor(platform.category)}">${platform.category}</span>
+                                <a href="https://www.google.com/search?q=${encodeURIComponent(platform.name)}" target="_blank" rel="noopener noreferrer" class="text-xl font-bold text-[var(--header-text-color)] hover:underline">${platform.name}</a>
+                                <span class="text-xs font-semibold text-white px-2 py-1 rounded-full" style="background-color: var(--accent-color);">${platform.category}</span>
                             </div>
-                            <p class="text-gray-600 text-sm leading-relaxed">${platform.description}</p>
+                            <p class="text-[var(--text-color)] text-sm leading-relaxed">${platform.description}</p>
                         </div>
-                        <div class="mt-auto pt-4 border-t border-gray-100 text-right">
-                            <a href="https://www.google.com/search?q=${encodeURIComponent(platform.name)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center text-sm font-semibold text-[#D4A373] hover:text-[#A87954] transition-colors">
-                                Go to Website
-                                <svg class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                            </a>
+                        <div class="mt-auto pt-4 border-t border-[var(--card-border)] text-right">
+                             <a href="https://www.google.com/search?q=${encodeURIComponent(platform.name)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center text-sm font-semibold hover:opacity-80 transition-colors" style="color: var(--accent-color)">
+                                 Search Online
+                             </a>
                         </div>
                     `;
                     platformsGrid.appendChild(card);
                 });
             }
-
-            function getCategoryColor(category) {
-                switch (category) {
-                    case 'Torrent': return 'bg-blue-500';
-                    case 'DDL': return 'bg-green-500';
-                    case 'Repacker': return 'bg-purple-500';
-                    case 'Community': return 'bg-orange-500';
-                    default: return 'bg-gray-500';
-                }
-            }
             
+             const getChartColors = () => {
+                const isDark = document.documentElement.classList.contains('dark');
+                const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim();
+                // Function to create RGBA from hex
+                const hexToRgba = (hex, alpha) => {
+                    const r = parseInt(hex.slice(1, 3), 16);
+                    const g = parseInt(hex.slice(3, 5), 16);
+                    const b = parseInt(hex.slice(5, 7), 16);
+                    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                };
+                
+                return {
+                    grid: isDark ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb',
+                    ticks: isDark ? '#d1d5db' : '#1f2937',
+                    bars: [
+                        hexToRgba(accent, 0.8),
+                        hexToRgba(accent, 0.7),
+                        hexToRgba(accent, 0.6),
+                        hexToRgba(accent, 0.5),
+                        hexToRgba(accent, 0.4),
+                    ],
+                    border: accent
+                };
+            };
+            
+            function updateChartColors() {
+                if (!riskChart) return;
+                const colors = getChartColors();
+                riskChart.options.scales.x.grid.color = colors.grid;
+                riskChart.options.scales.x.ticks.color = colors.ticks;
+                riskChart.options.scales.y.grid.color = 'transparent';
+                riskChart.options.scales.y.ticks.color = colors.ticks;
+                riskChart.data.datasets[0].backgroundColor = colors.bars;
+                riskChart.data.datasets[0].borderColor = colors.border;
+                riskChart.update();
+            }
+
             function renderRiskChart() {
                 const ctx = document.getElementById('riskChart').getContext('2d');
-                new Chart(ctx, {
+                const colors = getChartColors();
+                riskChart = new Chart(ctx, {
                     type: 'bar',
                     data: {
-                        labels: ['Malware & Viruses', 'Adware & PUPs', 'Legal Action', 'Data & Privacy Theft', 'Broken/Unstable Software'],
+                        labels: ['Malware & Viruses', 'Adware & PUPs', 'Data & Privacy Theft', 'Broken/Unstable Software', 'Legal Action'],
                         datasets: [{
-                            label: 'Mention Frequency in User Discussions',
-                            data: [90, 75, 40, 65, 55],
-                            backgroundColor: [
-                                'rgba(212, 163, 115, 0.6)',
-                                'rgba(140, 109, 83, 0.6)',
-                                'rgba(194, 159, 128, 0.6)',
-                                'rgba(111, 78, 55, 0.6)',
-                                'rgba(168, 132, 102, 0.6)'
-                            ],
-                            borderColor: [
-                                'rgba(212, 163, 115, 1)',
-                                'rgba(140, 109, 83, 1)',
-                                'rgba(194, 159, 128, 1)',
-                                'rgba(111, 78, 55, 1)',
-                                'rgba(168, 132, 102, 1)'
-                            ],
-                            borderWidth: 1
+                            label: 'Mention Frequency',
+                            data: [90, 75, 65, 55, 40],
+                            backgroundColor: colors.bars,
+                            borderColor: colors.border,
+                            borderWidth: 1,
+                            borderRadius: 4
                         }]
                     },
                     options: {
@@ -298,21 +411,10 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         scales: {
-                            x: { beginAtZero: true, title: { display: true, text: 'Relative Mention Frequency (Arbitrary Units)' } }
+                            x: { beginAtZero: true, title: { display: true, text: 'Relative Mention Frequency', color: colors.ticks }, grid: { color: colors.grid }, ticks: { color: colors.ticks } },
+                            y: { grid: { display: false }, ticks: { color: colors.ticks } }
                         },
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        let label = context.dataset.label || '';
-                                        if (label) { label += ': '; }
-                                        if (context.parsed.x !== null) { label += context.parsed.x; }
-                                        return label;
-                                    }
-                                }
-                            }
-                        }
+                        plugins: { legend: { display: false } }
                     }
                 });
             }
@@ -337,23 +439,11 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
-
-                    if (!response.ok) {
-                        throw new Error(`API request failed with status ${response.status}`);
-                    }
-
+                    if (!response.ok) throw new Error(`API request failed with status ${response.status}`);
                     const result = await response.json();
-                    const candidate = result.candidates?.[0];
-
-                    if (candidate && candidate.content?.parts?.[0]?.text) {
-                        const text = candidate.content.parts[0].text;
-                        const formattedText = text
-                            .trim()
-                            .split('\n')
-                            .map(item => item.replace(/^[\d.*-]\s*/, ''))
-                            .filter(item => item.trim() !== '')
-                            .map(item => `<li>${item.trim()}</li>`)
-                            .join('');
+                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (text) {
+                        const formattedText = text.trim().split('\n').map(item => item.replace(/^[\d.*-]\s*/, '')).filter(item => item.trim() !== '').map(item => `<li>${item.trim()}</li>`).join('');
                         checklistContainer.innerHTML = `<ul class="checklist text-left">${formattedText}</ul>`;
                     } else {
                         throw new Error("Received an invalid response from the API.");
@@ -372,9 +462,5 @@
         });
     </script>
 
-
 </body>
 </html>
-
-
-
