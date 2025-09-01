@@ -1,22 +1,72 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light"> <!-- Default to light theme, JS will override -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analysis of Pirated Educational Content Sources</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- Chosen Palette: Warm Neutrals -->
-    <!-- Application Structure Plan: A dashboard layout with a filterable list on the left and a dynamic chart/details pane on the right. This structure was chosen to allow users to easily compare platforms at a glance (via the chart) and then drill down into specific details without losing context. Filtering by platform type enables thematic analysis, which is more user-friendly than a static, linear report. -->
-    <!-- Visualization & Content Choices: Report Info: Top 10 sites -> Goal: Compare mention frequency -> Viz: Horizontal Bar Chart (Chart.js) -> Interaction: Updates on filter clicks -> Justification: Best for comparing categorical data. | Report Info: Platform details -> Goal: Inform -> Presentation: Dynamic Text Block -> Interaction: Updates on list item click -> Justification: Provides focused information on demand. | Report Info: Platform categories -> Goal: Organize -> Presentation: Filter Buttons -> Interaction: Filters list and chart -> Justification: Allows users to segment and explore the dataset. -->
-    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Roboto+Mono:wght@700&display=swap" rel="stylesheet">
+    
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #FDFBF8;
-            color: #383838;
+        /* ============================================
+        CSS Custom Properties for Theming
+        ============================================
+        */
+        :root {
+            /* -- LIGHT THEME (WHITE, BLACK, & #6600ff) -- */
+            --bg-color-start: #ffffff;
+            --bg-color-end: #f9fafb;
+            --text-color: #1f2937;
+            --header-text-color: #000000;
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --card-border: #e5e7eb;
+            --card-shadow: rgba(0, 0, 0, 0.07);
+            --accent-color: #6600ff;
+            --accent-glow: rgba(102, 0, 255, 0.25);
+            --footer-text-color: #4b5563;
         }
+
+        html.dark {
+            /* -- DARK THEME (BLACK & PURPLE) -- */
+            --bg-color-start: #000000;
+            --bg-color-end: #0d0d0d;
+            --text-color: #d1d5db;
+            --header-text-color: #ffffff;
+            --card-bg: rgba(20, 20, 20, 0.7);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --card-shadow: rgba(0, 0, 0, 0.5);
+            --accent-color: #A78BFA;
+            --footer-text-color: #9ca3af;
+        }
+
+        /* ============================================
+        Base & Page-Specific Styles
+        ============================================
+        */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color-start);
+            background-image: linear-gradient(135deg, var(--bg-color-start) 0%, var(--bg-color-end) 100%);
+            color: var(--text-color);
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+
+        .logo-font {
+            font-family: 'Roboto Mono', monospace;
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            box-shadow: 0 4px 6px -1px var(--card-shadow);
+            transition: all 0.3s ease;
+        }
+
         .chart-container {
             position: relative;
             width: 100%;
@@ -26,87 +76,193 @@
             height: 400px;
             max-height: 50vh;
         }
-        @media (min-width: 768px) {
-            .chart-container {
-                height: 500px;
-            }
-        }
+        @media (min-width: 768px) { .chart-container { height: 500px; } }
+
         .platform-item.active {
-            background-color: #D6E4E5;
-            border-left-color: #497174;
+            background-color: var(--accent-glow);
+            border-left-color: var(--accent-color);
+        }
+
+        .filter-btn {
+            background-color: var(--card-border);
+            color: var(--text-color);
+            transition: all 0.2s;
+        }
+        .filter-btn:hover {
+            opacity: 0.8;
         }
         .filter-btn.active {
-            background-color: #497174;
-            color: #FDFBF8;
+            background-color: var(--accent-color);
+            color: white;
+            box-shadow: 0 4px 14px 0 var(--accent-glow);
         }
     </style>
 </head>
 <body class="antialiased">
-    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+
+    <!-- ▼▼▼ REUSABLE HEADER COMPONENT ▼▼▼ -->
+    <header id="site-header" style="position: fixed; top: 0; left: 0; right: 0; z-index: 50; transition: all 0.3s ease;">
+        <nav style="max-width: 1280px; margin-left: auto; margin-right: auto; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+            <a href="index.html" style="font-size: 1.5rem; line-height: 2rem; font-weight: 700; font-family: 'Roboto Mono', monospace; letter-spacing: -0.05em; color: var(--header-text-color); text-decoration: none; transition: color 0.5s;">
+                <span style="color: var(--accent-color);">7</span>Piracy
+            </a>
+            <div id="desktop-nav" style="display: none; align-items: center; gap: 2rem;">
+                <a href="index.html" style="color: var(--text-color); transition: color 0.3s; font-weight: 600; text-decoration: none;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='var(--text-color)'">Home</a>
+                <a href="about.html" style="color: var(--text-color); transition: color 0.3s; font-weight: 600; text-decoration: none;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='var(--text-color)'">About</a>
+                <button id="theme-toggle-desktop" style="background-color: var(--bg-color-end); border-radius: 9999px; cursor: pointer; transition: all 0.4s ease; box-shadow: -5px -5px 10px var(--neumorphism-shadow-light), 5px 5px 10px var(--neumorphism-shadow-dark); width: 2.5rem; height: 2.5rem; display: flex; align-items: center; justify-content: center; position: relative; border: none;">
+                    <svg class="sun-icon" style="width: 1.25rem; height: 1.25rem; color: #FBBF24;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M12 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <svg class="moon-icon" style="width: 1.25rem; height: 1.25rem; color: #818cf8; position: absolute;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                </button>
+            </div>
+            <div id="mobile-menu-button-container">
+                <button id="mobile-menu-button" style="color: var(--header-text-color); border: none; background: none; cursor: pointer;">
+                    <svg style="width: 1.5rem; height: 1.5rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+        </nav>
+        <div id="mobile-menu" style="display: none; background-color: var(--card-bg); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);">
+            <div style="padding: 0.5rem 0.75rem 0.75rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem;">
+                <a href="index.html" style="display: block; padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-weight: 600; color: var(--text-color); text-decoration: none;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='var(--text-color)'">Home</a>
+                <a href="about.html" style="display: block; padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-weight: 600; color: var(--text-color); text-decoration: none;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='var(--text-color)'">About</a>
+                <div style="padding-top: 1rem;">
+                    <button id="theme-toggle-mobile" style="background-color: var(--bg-color-end); border-radius: 9999px; cursor: pointer; transition: all 0.4s ease; box-shadow: -5px -5px 10px var(--neumorphism-shadow-light), 5px 5px 10px var(--neumorphism-shadow-dark); width: 3rem; height: 3rem; display: flex; align-items: center; justify-content: center; position: relative; border: none;">
+                         <svg class="sun-icon" style="width: 1.5rem; height: 1.5rem; color: #FBBF24;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M12 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                         <svg class="moon-icon" style="width: 1.5rem; height: 1.5rem; color: #818cf8; position: absolute;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- ▲▲▲ END OF HEADER ▲▲▲ -->
+
+    <main class="container mx-auto p-4 md:p-8 max-w-7xl" style="padding-top: 6rem;">
         <header class="text-center mb-10">
-            <h1 class="text-3xl md:text-5xl font-bold text-[#497174]">Analysis of Cited Platforms for Educational Content</h1>
-            <p class="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">An interactive report summarizing platforms commonly mentioned in public online discussions for accessing educational materials, based on qualitative research.</p>
+            <h1 class="text-3xl md:text-5xl font-bold text-[var(--header-text-color)]" style="color:var(--accent-color)">Educational Content Sources</h1>
+            <p class="mt-4 text-lg text-[var(--text-color)] max-w-3xl mx-auto">An interactive report summarizing platforms for educational materials, based on qualitative research.</p>
         </header>
 
-        <main class="grid grid-cols-1 md:grid-cols-12 gap-8">
-            <aside class="md:col-span-4 lg:col-span-3 bg-white p-6 rounded-lg shadow-md">
-                <h2 class="text-xl font-bold mb-4">Explore Platforms</h2>
-                <div id="filters" class="flex flex-wrap gap-2 mb-6">
-                </div>
-                <p class="text-sm text-gray-500 mb-4">Select a platform type to filter the list and chart, or click on an individual platform to view its details.</p>
-                <div id="platform-list" class="space-y-2">
-                </div>
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+            <aside class="md:col-span-4 lg:col-span-3 card p-6">
+                <h2 class="text-xl font-bold mb-4 text-[var(--header-text-color)]">Explore Platforms</h2>
+                <div id="filters" class="flex flex-wrap gap-2 mb-6"></div>
+                <p class="text-sm text-[var(--text-color)] mb-4">Select a type to filter, or click a platform to view details.</p>
+                <div id="platform-list" class="space-y-2"></div>
             </aside>
 
             <section class="md:col-span-8 lg:col-span-9 space-y-8">
-                <div class="bg-white p-6 rounded-lg shadow-md">
-                    <h2 class="text-2xl font-bold text-center mb-2">Relative Mention Frequency</h2>
-                    <p class="text-center text-gray-500 mb-4">This chart illustrates the estimated frequency each platform was mentioned as a source for educational content in the analyzed discussions. A higher score indicates more frequent citations.</p>
+                <div class="card p-6">
+                    <h2 class="text-2xl font-bold text-center mb-2 text-[var(--header-text-color)]">Relative Mention Frequency</h2>
+                    <p class="text-center text-[var(--text-color)] mb-4">This chart illustrates the frequency each platform was mentioned as a source for educational content.</p>
                     <div class="chart-container">
                         <canvas id="mentionChart"></canvas>
                     </div>
                 </div>
-                <div id="details-section" class="bg-white p-6 rounded-lg shadow-md transition-opacity duration-500 opacity-0">
-                    <h2 id="details-title" class="text-2xl font-bold mb-4">Platform Details</h2>
+                <div id="details-section" class="card p-6 transition-opacity duration-500 opacity-0">
+                    <h2 id="details-title" class="text-2xl font-bold mb-4 text-[var(--header-text-color)]">Platform Details</h2>
                     <div id="details-content">
-                        <p class="text-gray-500">Please select a platform from the list on the left to see more details.</p>
+                        <p class="text-[var(--text-color)]">Please select a platform from the list on the left to see more details.</p>
                     </div>
                 </div>
             </section>
-        </main>
-        
-        <footer class="w-full text-center p-6 text-gray-600">
-  <div class="border-t border-gray-300 pt-6">
-    <p class="text-sm">
-      Made with <span class="text-red-500">&hearts;</span> by <strong>Ann</strong>
-    </p>
-    <p class="text-sm mt-2">
-      Email: 
-      <a href="mailto:anjanchaubey0.com" class="text-blue-500 hover:text-blue-700 transition-colors">
-        anjanchaubey0.com
-      </a>
-    </p>
-    <div class="flex items-center justify-center space-x-4 mt-4">
-      <!-- Mail -->
-      <a href="mailto:anjanchaubey0.com" class="text-gray-500 hover:text-gray-800 transition-colors">
-        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg>
-      </a>
-      <!-- GitHub -->
-      <a href="https://github.com/Anjanchaubey" target="_blank" class="text-gray-500 hover:text-gray-800 transition-colors">
-        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.6 0-12 5.4-12 12 0 5.3 3.4 9.8 8.2 11.4.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.5-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2.9-.3 2-.4 3-.4 1 0 2 .1 3 .4 2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6C20.6 21.8 24 17.3 24 12c0-6.6-5.4-12-12-12z"></path></svg>
-      </a>
-      <!-- Instagram -->
-      <a href="https://instagram.com/anjanchaubey07" target="_blank" class="text-gray-500 hover:text-gray-800 transition-colors">
-        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M7 2C4.2 2 2 4.2 2 7v10c0 2.8 2.2 5 5 5h10c2.8 0 5-2.2 5-5V7c0-2.8-2.2-5-5-5H7zm10 2c1.7 0 3 1.3 3 3v10c0 1.7-1.3 3-3 3H7c-1.7 0-3-1.3-3-3V7c0-1.7 1.3-3 3-3h10zm-5 3c-2.8 0-5 2.2-5 5s2.2 5 5 5 5-2.2 5-5-2.2-5-5-5zm0 2c1.7 0 3 1.3 3 3s-1.3 3-3 3-3-1.3-3-3 1.3-3 3-3zm4.5-3c-.8 0-1.5.7-1.5 1.5S15.7 8 16.5 8 18 7.3 18 6.5 17.3 4 16.5 4z"></path></svg>
-      </a>
-    </div>
-    <p class="text-xs text-gray-400 mt-4">© 2025 All Rights Reserved</p>
-  </div>
-</footer>
-    </div>
+        </div>
+    </main>
+    
+    <footer class="w-full text-center p-6 text-[var(--footer-text-color)]">
+        <div class="border-t border-[var(--card-border)] pt-6 max-w-7xl mx-auto">
+            <p class="text-sm">Made with <span class="text-red-500">&hearts;</span> by <strong>Anjan Chaubey</strong></p>
+            <div class="flex items-center justify-center space-x-4 mt-4">
+                <a href="mailto:anjanchaubey0@gmail.com" class="text-[var(--footer-text-color)] hover:text-[var(--accent-color)] transition-colors"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884zM18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path></svg></a>
+                <a href="https://github.com/Anjanchaubey" target="_blank" class="text-[var(--footer-text-color)] hover:text-[var(--accent-color)] transition-colors"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.6 0-12 5.4-12 12 0 5.3 3.4 9.8 8.2 11.4.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.5-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2.9-.3 2-.4 3-.4 1 0 2 .1 3 .4 2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6C20.6 21.8 24 17.3 24 12c0-6.6-5.4-12-12-12z"></path></svg></a>
+                <a href="https://instagram.com/anjanchaubey07" target="_blank" class="text-[var(--footer-text-color)] hover:text-[var(--accent-color)] transition-colors"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M7 2C4.2 2 2 4.2 2 7v10c0 2.8 2.2 5 5 5h10c2.8 0 5-2.2 5-5V7c0-2.8-2.2-5-5-5H7zm10 2c1.7 0 3 1.3 3 3v10c0 1.7-1.3 3-3 3H7c-1.7 0-3-1.3-3-3V7c0-1.7 1.3-3 3-3h10zm-5 3c-2.8 0-5 2.2-5 5s2.2 5 5 5 5-2.2 5-5-2.2-5-5-5zm0 2c1.7 0 3 1.3 3 3s-1.3 3-3 3-3-1.3-3-3 1.3-3 3-3zm4.5-3c-.8 0-1.5.7-1.5 1.5S15.7 8 16.5 8 18 7.3 18 6.5 17.3 4 16.5 4z"></path></svg></a>
+            </div>
+            <p class="text-xs mt-4" style="color: var(--footer-text-color-muted)">© 2025 7 Piracy. All Rights Reserved.</p>
+        </div>
+    </footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            let chart; // Hoisted chart variable
+            
+            // ===================================
+            // HEADER SCRIPT LOGIC
+            // ===================================
+            const themeToggles = document.querySelectorAll('#theme-toggle-desktop, #theme-toggle-mobile');
+            const sunIcons = document.querySelectorAll('.sun-icon');
+            const moonIcons = document.querySelectorAll('.moon-icon');
+            const htmlElement = document.documentElement;
+
+            const applyTheme = (theme) => {
+                if (theme === 'dark') {
+                    htmlElement.classList.add('dark');
+                    htmlElement.classList.remove('light');
+                    sunIcons.forEach(i => { i.style.transform = 'rotate(180deg) scale(0)'; i.style.opacity = '0'; });
+                    moonIcons.forEach(i => { i.style.transform = 'rotate(0) scale(1)'; i.style.opacity = '1'; });
+                } else {
+                    htmlElement.classList.remove('dark');
+                    htmlElement.classList.add('light');
+                    sunIcons.forEach(i => { i.style.transform = 'rotate(0) scale(1)'; i.style.opacity = '1'; });
+                    moonIcons.forEach(i => { i.style.transform = 'rotate(-180deg) scale(0)'; i.style.opacity = '0'; });
+                }
+                localStorage.setItem('theme', theme);
+                if(chart) updateChartColors(); // Update chart colors on theme change
+            };
+
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (savedTheme) { applyTheme(savedTheme); }
+            else if (prefersDark) { applyTheme('dark'); }
+            else { applyTheme('light'); }
+
+            themeToggles.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const isDark = htmlElement.classList.contains('dark');
+                    applyTheme(isDark ? 'light' : 'dark');
+                });
+            });
+            
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const desktopNav = document.getElementById('desktop-nav');
+            const mobileMenuBtnContainer = document.getElementById('mobile-menu-button-container');
+
+            const handleResize = () => {
+                if (window.innerWidth >= 768) {
+                    desktopNav.style.display = 'flex';
+                    mobileMenuBtnContainer.style.display = 'none';
+                    mobileMenu.style.display = 'none';
+                } else {
+                    desktopNav.style.display = 'none';
+                    mobileMenuBtnContainer.style.display = 'block';
+                }
+            };
+
+            mobileMenuButton.addEventListener('click', () => {
+                const isHidden = mobileMenu.style.display === 'none';
+                mobileMenu.style.display = isHidden ? 'block' : 'none';
+            });
+
+            window.addEventListener('resize', handleResize);
+            handleResize();
+
+            const header = document.getElementById('site-header');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 10) {
+                    header.style.backgroundColor = 'var(--card-bg)';
+                    header.style.backdropFilter = 'blur(10px)';
+                    header.style.webkitBackdropFilter = 'blur(10px)';
+                    header.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+                } else {
+                    header.style.backgroundColor = 'transparent';
+                    header.style.backdropFilter = 'none';
+                    header.style.webkitBackdropFilter = 'none';
+                    header.style.boxShadow = 'none';
+                }
+            });
+
+            // ===================================
+            // EDUCATION PAGE SPECIFIC LOGIC
+            // ===================================
             const platformData = [
                 { name: 'Library Genesis (Libgen)', type: 'Shadow Library', content: 'Textbooks, academic papers, general fiction/non-fiction.', score: 10, note: 'Consistently the most cited platform across all sources, often referred to as the primary destination for academic and non-fiction books.' },
                 { name: 'Z-Library', type: 'Shadow Library', content: 'General fiction/non-fiction, textbooks.', score: 9, note: 'Frequently mentioned alongside Libgen. Known for its large collection and user-friendly interface before facing significant legal actions.' },
@@ -126,19 +282,34 @@
             const detailsTitleEl = document.getElementById('details-title');
             const detailsContentEl = document.getElementById('details-content');
 
-            let chart;
             let activeFilter = 'All';
             let activePlatform = null;
 
-            const platformTypes = ['All', ...new Set(platformData.map(p => p.type))];
+            const getChartColors = () => {
+                const isDark = document.documentElement.classList.contains('dark');
+                return {
+                    grid: isDark ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb',
+                    ticks: isDark ? '#d1d5db' : '#1f2937',
+                    accent: getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim(),
+                };
+            };
             
-            function renderFilters() {
-                filtersEl.innerHTML = platformTypes.map(type => `
-                    <button class="filter-btn px-3 py-1 text-sm font-medium rounded-full transition-colors ${type === activeFilter ? 'active' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}" data-type="${type}">
-                        ${type}
-                    </button>
-                `).join('');
+            const updateChartColors = () => {
+                if (!chart) return;
+                const colors = getChartColors();
+                chart.options.scales.x.grid.color = colors.grid;
+                chart.options.scales.x.ticks.color = colors.ticks;
+                chart.options.scales.y.grid.color = 'transparent';
+                chart.options.scales.y.ticks.color = colors.ticks;
+                chart.data.datasets[0].backgroundColor = colors.accent;
+                chart.update();
+            };
 
+            function renderFilters() {
+                const platformTypes = ['All', ...new Set(platformData.map(p => p.type))];
+                filtersEl.innerHTML = platformTypes.map(type => `
+                    <button class="filter-btn px-3 py-1 text-sm font-medium rounded-full ${type === activeFilter ? 'active' : ''}" data-type="${type}">${type}</button>
+                `).join('');
                 filtersEl.querySelectorAll('.filter-btn').forEach(btn => {
                     btn.addEventListener('click', () => {
                         activeFilter = btn.dataset.type;
@@ -151,21 +322,16 @@
             function renderPlatformList() {
                 const filteredData = platformData.filter(p => activeFilter === 'All' || p.type === activeFilter);
                 platformListEl.innerHTML = filteredData.map(p => `
-                    <div class="platform-item p-3 border-l-4 border-gray-200 hover:bg-gray-100 transition-colors flex justify-between items-center ${p.name === activePlatform?.name ? 'active' : ''}">
+                    <div class="platform-item p-3 border-l-4 transition-colors flex justify-between items-center ${p.name === activePlatform?.name ? 'active' : 'border-transparent hover:bg-[var(--card-border)]'}">
                         <div class="details-trigger cursor-pointer flex-grow" data-name="${p.name}">
-                            <h4 class="font-semibold">${p.name}</h4>
-                            <p class="text-xs text-gray-500">${p.type}</p>
+                            <h4 class="font-semibold text-[var(--header-text-color)]">${p.name}</h4>
+                            <p class="text-xs text-[var(--text-color)]">${p.type}</p>
                         </div>
-                        <a href="https://www.google.com/search?q=${encodeURIComponent(p.name)}" target="_blank" rel="noopener noreferrer" class="ml-2 flex-shrink-0 text-xs bg-gray-200 text-gray-700 hover:bg-gray-300 font-semibold py-1 px-3 rounded-full transition-colors" title="Find ${p.name} on Google">
-                            Find on Google
-                        </a>
                     </div>
                 `).join('');
-
                 platformListEl.querySelectorAll('.details-trigger').forEach(item => {
                     item.addEventListener('click', () => {
-                        const platformName = item.dataset.name;
-                        activePlatform = platformData.find(p => p.name === platformName);
+                        activePlatform = platformData.find(p => p.name === item.dataset.name);
                         updateApp();
                     });
                 });
@@ -174,79 +340,30 @@
             function renderChart() {
                 const filteredData = platformData.filter(p => activeFilter === 'All' || p.type === activeFilter);
                 const ctx = document.getElementById('mentionChart').getContext('2d');
+                const colors = getChartColors();
                 
-                const chartData = {
-                    labels: filteredData.map(p => p.name),
-                    datasets: [{
-                        label: 'Relative Mention Score',
-                        data: filteredData.map(p => p.score),
-                        backgroundColor: '#497174',
-                        borderColor: '#383838',
-                        borderWidth: 1,
-                        borderRadius: 4
-                    }]
-                };
-
-                const options = {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            grid: {
-                                color: '#EAEAEA'
-                            },
-                            ticks: {
-                                color: '#555'
-                            }
-                        },
-                        y: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                color: '#555',
-                                autoSkip: false,
-                                callback: function(value) {
-                                    const label = this.getLabelForValue(value);
-                                    if (label.length > 25) {
-                                        return label.substring(0, 25) + '...';
-                                    }
-                                    return label;
-                                }
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: '#383838',
-                            titleFont: {
-                                size: 14,
-                                weight: 'bold'
-                            },
-                            bodyFont: {
-                                size: 12
-                            },
-                            callbacks: {
-                                label: function(context) {
-                                    return ` Mention Score: ${context.raw}`;
-                                }
-                            }
-                        }
-                    }
-                };
-                
-                if (chart) {
-                    chart.destroy();
-                }
+                if (chart) chart.destroy();
                 chart = new Chart(ctx, {
                     type: 'bar',
-                    data: chartData,
-                    options: options
+                    data: {
+                        labels: filteredData.map(p => p.name),
+                        datasets: [{
+                            label: 'Relative Mention Score',
+                            data: filteredData.map(p => p.score),
+                            backgroundColor: colors.accent,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { beginAtZero: true, grid: { color: colors.grid }, ticks: { color: colors.ticks } },
+                            y: { grid: { display: false }, ticks: { color: colors.ticks, autoSkip: false } }
+                        }
+                    }
                 });
             }
 
@@ -256,34 +373,32 @@
                     detailsContentEl.innerHTML = `
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <p class="text-sm font-semibold text-gray-500">Platform Type</p>
-                                <p class="text-lg">${activePlatform.type}</p>
+                                <p class="text-sm font-semibold text-[var(--text-color)] opacity-70">Platform Type</p>
+                                <p class="text-lg text-[var(--header-text-color)]">${activePlatform.type}</p>
                             </div>
-                             <div>
-                                <p class="text-sm font-semibold text-gray-500">Relative Mention Score</p>
-                                <p class="text-lg">${activePlatform.score} / 10</p>
+                            <div>
+                                <p class="text-sm font-semibold text-[var(--text-color)] opacity-70">Relative Mention Score</p>
+                                <p class="text-lg text-[var(--header-text-color)]">${activePlatform.score} / 10</p>
                             </div>
                         </div>
                         <div class="mt-4">
-                            <p class="text-sm font-semibold text-gray-500">Primary Content</p>
-                            <p>${activePlatform.content}</p>
+                            <p class="text-sm font-semibold text-[var(--text-color)] opacity-70">Primary Content</p>
+                            <p class="text-[var(--text-color)]">${activePlatform.content}</p>
                         </div>
                         <div class="mt-4">
-                            <p class="text-sm font-semibold text-gray-500">Key Insight</p>
-                            <p>${activePlatform.note}</p>
+                            <p class="text-sm font-semibold text-[var(--text-color)] opacity-70">Key Insight</p>
+                            <p class="text-[var(--text-color)]">${activePlatform.note}</p>
                         </div>
                         <div class="mt-6 text-center">
-                            <a href="https://www.google.com/search?q=${encodeURIComponent(activePlatform.name)}" target="_blank" rel="noopener noreferrer" class="inline-block bg-[#497174] text-white font-bold py-2 px-6 rounded-lg hover:bg-[#385a5c] transition-colors">
-                                Find "${activePlatform.name}" on Google
+                            <a href="https://www.google.com/search?q=${encodeURIComponent(activePlatform.name)}" target="_blank" rel="noopener noreferrer" class="inline-block text-white font-bold py-2 px-6 rounded-lg transition-opacity hover:opacity-90" style="background-color: var(--accent-color)">
+                                Find "${activePlatform.name}" Online
                             </a>
                         </div>
                     `;
                     detailsSectionEl.classList.remove('opacity-0');
                 } else {
                     detailsTitleEl.textContent = "Platform Details";
-                     detailsContentEl.innerHTML = `
-                        <p class="text-gray-500">Please select a platform from the list on the left to see more details.</p>
-                    `;
+                    detailsContentEl.innerHTML = `<p class="text-[var(--text-color)]">Please select a platform from the list on the left to see more details.</p>`;
                     detailsSectionEl.classList.add('opacity-0');
                 }
             }
@@ -300,6 +415,3 @@
     </script>
 </body>
 </html>
-
-
-
