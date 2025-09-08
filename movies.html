@@ -98,10 +98,13 @@
 <body class="antialiased">
 
     <!-- ▼▼▼ REUSABLE HEADER COMPONENT ▼▼▼ -->
-    <header id="site-header" style="position: fixed; top: 0; left: 0; right: 0; z-index: 50; transition: all 0.3s ease;">
+     <header id="site-header" style="position: fixed; top: 0; left: 0; right: 0; z-index: 50; transition: all 0.3s ease;">
         <nav style="max-width: 1280px; margin-left: auto; margin-right: auto; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
-            <a href="index.html" style="font-size: 1.5rem; line-height: 2rem; font-weight: 700; font-family: 'Roboto Mono', monospace; letter-spacing: -0.05em; color: var(--header-text-color); text-decoration: none; transition: color 0.5s;">
-                <span style="color: var(--accent-color);">7</span>Piracy
+            <a href="index.html" style="display: flex; align-items: center; gap: 0.75rem; text-decoration: none;">
+                <img src="favicon.png" alt="Orion Logo" style="height: 2rem; width: auto;">
+                <div class="logo-font" style="font-size: 1.5rem; line-height: 2rem; font-weight: 700; letter-spacing: -0.05em; color: var(--header-text-color); transition: color 0.5s;">
+                    <span style="color: var(--accent-color);">7</span>Piracy
+                </div>
             </a>
             <div id="desktop-nav" style="display: none; align-items: center; gap: 2rem;">
                 <a href="index.html" style="color: var(--text-color); transition: color 0.3s; font-weight: 600; text-decoration: none;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='var(--text-color)'">Home</a>
@@ -175,9 +178,12 @@
             </div>
         </div>
 
-        <footer class="text-center mt-8 py-4 text-[var(--footer-text-color)] text-sm">
-            <p>Data sourced from public social media and forum discussions for research purposes.</p>
-        </footer>
+        <footer class="w-full text-center p-6 text-[var(--footer-text-color)]">
+        <div class="border-t border-[var(--card-border)] pt-6 max-w-7xl mx-auto">
+             <p class="text-sm font-semibold">The 7 Piracy — A product of Orion</p>
+             <p class="text-xs mt-4 opacity-70">© 2025 All Rights Reserved.</p>
+        </div>
+    </footer>
     </main>
 
     <script>
