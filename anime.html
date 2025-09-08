@@ -93,10 +93,13 @@
 <body class="antialiased">
 
     <!-- ▼▼▼ REUSABLE HEADER COMPONENT ▼▼▼ -->
-    <header id="site-header" style="position: fixed; top: 0; left: 0; right: 0; z-index: 50; transition: all 0.3s ease;">
+       <header id="site-header" style="position: fixed; top: 0; left: 0; right: 0; z-index: 50; transition: all 0.3s ease;">
         <nav style="max-width: 1280px; margin-left: auto; margin-right: auto; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
-            <a href="index.html" style="font-size: 1.5rem; line-height: 2rem; font-weight: 700; font-family: 'Roboto Mono', monospace; letter-spacing: -0.05em; color: var(--header-text-color); text-decoration: none; transition: color 0.5s;">
-                <span style="color: var(--accent-color);">7</span>Piracy
+            <a href="index.html" style="display: flex; align-items: center; gap: 0.75rem; text-decoration: none;">
+                <img src="favicon.png" alt="Orion Logo" style="height: 2rem; width: auto;">
+                <div class="logo-font" style="font-size: 1.5rem; line-height: 2rem; font-weight: 700; letter-spacing: -0.05em; color: var(--header-text-color); transition: color 0.5s;">
+                    <span style="color: var(--accent-color);">7</span>Piracy
+                </div>
             </a>
             <div id="desktop-nav" style="display: none; align-items: center; gap: 2rem;">
                 <a href="index.html" style="color: var(--text-color); transition: color 0.3s; font-weight: 600; text-decoration: none;" onmouseover="this.style.color='var(--accent-color)'" onmouseout="this.style.color='var(--text-color)'">Home</a>
@@ -150,6 +153,13 @@
                 </div>
             </div>
         </div>
+
+        <footer class="w-full text-center p-6 text-[var(--footer-text-color)]">
+        <div class="border-t border-[var(--card-border)] pt-6 max-w-7xl mx-auto">
+             <p class="text-sm font-semibold">The 7 Piracy — A product of Orion</p>
+             <p class="text-xs mt-4 opacity-70">© 2025 All Rights Reserved.</p>
+        </div>
+    </footer>
     </main>
 
     <script>
@@ -235,7 +245,7 @@
             // ===================================
             const siteData = [
                 { name: "hianime.tv", aliases: "Zoro.to, AniWatch", score: 93, summary: "The latest rebrand in the popular Zoro.to and AniWatch lineage. It is a major destination for anime streaming, known for its high-quality video, extensive library, and a user interface with minimal advertising, making it a top recommendation." },
-                { name: "MoviesMod", aliases: "N/A", score: 89, summary: "A platform frequently mentioned for downloading a wide range of content, including movies and series. While not exclusively for anime, its broad library often includes popular anime films and shows, making it a versatile source for users.", imageUrl: "https://drive.google.com/file/d/1lZlvyy224rCQ7CphCBTmSovtLnhMa_XX/view?usp=drivesdk" },
+                { name: "Moviesbox", aliases: "N/A", score: 89, summary: "A platform frequently mentioned for downloading a wide range of content, including movies and series. While not exclusively for anime, its broad library often includes popular anime films and shows, making it a versatile source for users.", imageUrl: "https://drive.google.com/file/d/1lZlvyy224rCQ7CphCBTmSovtLnhMa_XX/view?usp=drivesdk" },
                 { name: "9anime", aliases: "AniWave", score: 95, summary: "Frequently cited as a top choice due to its large library and user-friendly interface. It has gone through rebrands, with AniWave being its current iteration. Users often compare it favorably with other major platforms for quality and content availability." },
                 { name: "Zoro.to", aliases: "Predecessor to HiAnime", score: 92, summary: "Known for its high-quality streaming and minimal ads. This platform has a notable history of rebranding, from Zoro.to to AniWatch, and more recently to HiAnime. Its successors are often recommended as direct alternatives." },
                 { name: "Gogoanime", aliases: "Anitaku", score: 88, summary: "A long-standing name in the community, recognized for quick updates with new episodes, often shortly after they air in Japan. It's a go-to for many users who prioritize speed, though ad intrusiveness is a common complaint." },
